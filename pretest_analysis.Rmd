@@ -1,0 +1,87 @@
+---
+title: "Pretest Analysis"
+author: "Nicolas Restrepo"
+date: "11/1/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Analysis 
+
+```{r}
+
+library(tidyverse)
+```
+
+
+```{r}
+
+# Load the data in 
+
+data <- read_csv("pretest.csv")
+
+# Get rid of the first three rows which are uninformative 
+
+data <- data[-(1:3), ]
+
+```
+
+Let's find out who passed the attention checks 
+
+```{r}
+
+data <- data %>% 
+  mutate(passed_1 = ifelse(ach_1_1 == "extremely harmful", 1, 0), 
+         passed_2 = ifelse(ach_2_1 == "not at all immoral", 1, 0), 
+         passed_3 = ifelse(ach_3_1 == "moderately unexpected", 1, 0), 
+         passed_4 = ifelse(ach_4_1 == "not at all harmful", 1, 0), 
+         passed_5 = ifelse(ach_5_1 == "extremely immoral", 1, 0), 
+         passed_6 = ifelse(ach_6_1 == "extremely unexpected", 1, 0), 
+         sum_pass = passed_1 + passed_2 + passed_3 + passed_4 + passed_5 + passed_6)
+```
+
+Let's just get a table to know who passed the attention checks 
+
+```{r}
+
+table_passed <- data %>% 
+  select(PID, sum_pass)
+
+```
+
+Let's recode the data so we get numbers instead of labels
+
+```{r}
+
+# Mutate all main questions 
+
+data_recoded <- data %>% 
+  mutate_at(vars(contains("_h_1")), funs(recode(., 
+                                   "not at all harmful" = 1, 
+                                   "slightly harmful" = 2, 
+                                   "moderately harmful" = 3, 
+                                   "very harmful" = 4, 
+                                   "extremely harmful" = 5))) %>% 
+  mutate_at(vars(contains("_i_1")), funs(recode(., 
+                                   "not at all immoral" = 1, 
+                                   "slightly immoral" = 2, 
+                                   "moderately immoral" = 3, 
+                                   "very immoral" = 4, 
+                                   "extremely immoral" = 5))) %>% 
+  mutate_at(vars(contains("_u_1")), funs(recode(., 
+                                   "not at all unexpected" = 1, 
+                                   "slightly unexpected" = 2, 
+                                   "moderately unexpected" = 3, 
+                                   "very unexpected" = 4, 
+                                   "extremely unexpected" = 5)))
+  
+  
+```
+
+Now let's see if we can begin doing some exploratory plots
+
+
+
