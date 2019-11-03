@@ -81,7 +81,42 @@ data_recoded <- data %>%
   
 ```
 
-Now let's see if we can begin doing some exploratory plots
+Let's try to get a more trim data set 
+
+```{r}
+
+# Get of of the first set of uninformative columns 
+
+data_recoded <- data_recoded %>% 
+  select(-contains("ach")) %>% 
+  select(pkp_h_1:msas_u_1)
+
+# Now let's create a more amenable dataset 
+
+d <- data_recoded %>% 
+  mutate(id = 1:n()) %>% 
+  select(id, everything()) 
+
+# Rename all variables 
+
+d <- d %>%  
+  rename_all(
+    funs(str_remove(., "_1"))
+    ) %>% 
+  mutate_if(is.character, as.numeric)
+
+# create a summary table for the values of each question 
+
+gd <- d %>% 
+  select(-id) %>% 
+  gather(key = "scenario", 
+         value = "score") %>% 
+  group_by(scenario) %>% 
+  summarise_all(funs(mean(.), max(.), min(.))) %>% 
+  ungroup()
+  
+```
+
 
 
 
