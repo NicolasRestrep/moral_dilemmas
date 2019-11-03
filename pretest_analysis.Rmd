@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 
 library(tidyverse)
+theme_set(theme_light())
 ```
 
 
@@ -112,11 +113,62 @@ gd <- d %>%
   gather(key = "scenario", 
          value = "score") %>% 
   group_by(scenario) %>% 
-  summarise_all(funs(mean(.), max(.), min(.), sd(.))) %>% 
-  ungroup()
+  summarise_all(funs(avg = mean(.), maximum = max(.), minimum = min(.), st_dv = sd(.))) %>% 
+  mutate(ci_lower = avg - 1.96*st_dv, 
+         ci_upper = avg + 1.96*st_dv)
   
 ```
 
+Now, we are in a position to start making some summary plots 
+
+```{r}
+
+# Keep only harm questions 
+
+gdh <- gd[str_which(gd$scenario, "_h"),]
+
+# Plot harm questions 
+
+gdh %>% 
+  ggplot(aes(x = reorder(scenario, avg), y = avg)) + 
+  geom_point(col = "darkred", fill = "darkred") + 
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), pch = 0) +
+  coord_flip() + 
+  labs(x = "", 
+       y = "Ratings", 
+       title = "Perceptions of Harmfulness")
+
+# Now lets look at immorality 
+
+gdi <- gd[str_which(gd$scenario, "_i"),]
+
+# Plot immorality
+
+gdi %>% 
+  ggplot(aes(x = reorder(scenario, avg), y = avg)) + 
+  geom_point(col = "darkred", fill = "darkred") + 
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), pch = 0) +
+  coord_flip() + 
+  labs(x = "", 
+       y = "Ratings", 
+       title = "Perceptions of Immorality")
+
+# Lastly let's look at unexpectedness 
+
+gdu <- gd[str_which(gd$scenario, "_u"),]
+
+# Plot Unexpectedness
+
+gdu %>% 
+  ggplot(aes(x = reorder(scenario, avg), y = avg)) + 
+  geom_point(col = "darkred", fill = "darkred") + 
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), pch = 0) +
+  coord_flip() + 
+  labs(x = "", 
+       y = "Ratings", 
+       title = "Perceptions of Unexpectedness")
+
+```
 
 
 
