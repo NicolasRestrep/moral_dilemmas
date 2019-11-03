@@ -112,7 +112,7 @@ gd <- d %>%
   gather(key = "scenario", 
          value = "score") %>% 
   group_by(scenario) %>% 
-  summarise_all(funs(mean(.), max(.), min(.))) %>% 
+  summarise_all(funs(mean(.), max(.), min(.), sd(.))) %>% 
   ungroup()
   
 ```
