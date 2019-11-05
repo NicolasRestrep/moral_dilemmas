@@ -6,17 +6,22 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = F, warning = F)
 ```
 
-## Analysis 
+## Preliminary Results
 
 ```{r}
 
+# Packages 
+
 library(tidyverse)
+library(knitr)
+library(kableExtra)
 theme_set(theme_light())
 ```
 
+I am going to begin by loading in the data. 
 
 ```{r}
 
@@ -30,7 +35,9 @@ data <- data[-(1:3), ]
 
 ```
 
-Let's find out who passed the attention checks 
+### Attention checks 
+
+First, it would be important to see who passed the attention checks.
 
 ```{r}
 
@@ -42,18 +49,43 @@ data <- data %>%
          passed_5 = ifelse(ach_5_1 == "extremely immoral", 1, 0), 
          passed_6 = ifelse(ach_6_1 == "extremely unexpected", 1, 0), 
          sum_pass = passed_1 + passed_2 + passed_3 + passed_4 + passed_5 + passed_6)
+
+# Now present the results in a table 
+
+table_passed <- data %>% 
+  select(PID, sum_pass) %>% 
+  group_by(sum_pass) %>% 
+  summarise( total = n())
+
+kable(table_passed) %>% 
+  kable_styling(bootstrap_options = c("striped"), full_width = F, position = "center")
+
 ```
 
-Let's just get a table to know who passed the attention checks 
+Overall we have three people who failed the attention checks. It seems that most people got them but, given that we only have 20 individuals, this is not an insubstantial number. Thus, this is worth bearing in mind. It might be useful to be more explicit about the attention checks in the instructions.
+
+### Checking the Pre-Screening
+
+For the purposes of this test, I told Prolific I only wanted liberal respondents. We can check whether the pre-screening did a good job. 
 
 ```{r}
 
-table_passed <- data %>% 
-  select(PID, sum_pass)
+data_pol <- data %>% 
+  select(PID, ideology_1) %>% 
+  mutate(liberal = ifelse(ideology_1 == 1 | ideology_1 == 2 | ideology_1 == 3, 1, 0)) %>% 
+  group_by(liberal) %>% 
+  summarise(total = n())
+
+kable(data_pol) %>% 
+  kable_styling(bootstrap_options = c("striped"), full_width = F, position = "center")
 
 ```
 
-Let's recode the data so we get numbers instead of labels
+Surprisingly, we have two respondents who don't identify as liberal. This can happen either because people have changed their minds since the time Prolific pre-screened them or because they are inconsistent with their answers. What we can do is confirm that the pre-screening is actually working by asking some of the demographic questions at the beginning. The question about ideology would be couched between other questions (such as race and gender) so that it is not too obvious. For the liberal sample, moderates and conservatives would become ineligible. We can add this skip logic to survey. 
+
+### Analyzing the Data 
+
+I am going to recode the data so we get numbers instead of strings:
 
 ```{r}
 
@@ -82,7 +114,7 @@ data_recoded <- data %>%
   
 ```
 
-Let's try to get a more trim data set 
+Now, I am going to focus solely on the responses to events:
 
 ```{r}
 
@@ -115,7 +147,34 @@ gd <- d %>%
   group_by(scenario) %>% 
   summarise_all(funs(avg = mean(.), maximum = max(.), minimum = min(.), st_dv = sd(.))) %>% 
   mutate(ci_lower = avg - 1.96*st_dv, 
-         ci_upper = avg + 1.96*st_dv)
+         ci_upper = avg + 1.96*st_dv) 
+
+gd <- gd %>% 
+  mutate(scenario = str_replace(scenario, "acr", "athlete_cheats_rival"), 
+         scenario = str_replace(scenario, "adr", "athlete_deceives_referee"), 
+         scenario = str_replace(scenario, "ayc", "athlete_yells_at_coach"), 
+         scenario = str_replace(scenario, "ccr", "coach_cheers_rival"), 
+         scenario = str_replace(scenario, "ddf", "daughter_disobeys_father"),
+         scenario = str_replace(scenario, "ecc", "employee_conspires_with_comp."),
+         scenario = str_replace(scenario, "elb", "employee_lies_to_boss"), 
+         scenario = str_replace(scenario, "git", "girl_interrupts_teacher"),
+         scenario = str_replace(scenario, "idb", "intern_disobeys_boss"), 
+         scenario = str_replace(scenario, "jbd", "judge_befriends_defendant"), 
+         scenario = str_replace(scenario, "mbr", "man_betrays_relative"), 
+         scenario = str_replace(scenario, "mbw", "man_betrays_wife"), 
+         scenario = str_replace(scenario, "mmc", "man_marries_cousin"),
+         scenario = str_replace(scenario, "mmls", "man_makes_love_sister"), 
+         scenario = str_replace(scenario, "mpsa", "married_has_sex_adulterer"), 
+         scenario = str_replace(scenario, "msas", "mother_sexually_arouses_son"), 
+         scenario = str_replace(scenario, "msn", "mayor_slanders_neighbor"), 
+         scenario = str_replace(scenario, "pch", "person_hurts_child"), 
+         scenario = str_replace(scenario, "php", "person_hires_prostitute"), 
+         scenario = str_replace(scenario, "pkp", "person_kills_person"),
+         scenario = str_replace(scenario, "scc", "student_cheats_classmate"), 
+         scenario = str_replace(scenario, "sip", "student_insults_professor"), 
+         scenario = str_replace(scenario, "thls", "teacher_hits_lazy_student"), 
+         scenario = str_replace(scenario, "whh", "wife_hits_husband"), 
+         scenario = str_replace(scenario, "tmdp", "teenager_mocks_disabled"))
   
 ```
 
@@ -125,11 +184,12 @@ Now, we are in a position to start making some summary plots
 
 # Keep only harm questions 
 
-gdh <- gd[str_which(gd$scenario, "_h"),]
+gdh <- gd[str_which(gd$scenario, "_h$"),]
 
 # Plot harm questions 
 
 gdh %>% 
+  mutate(scenario = str_remove(scenario, "_h$")) %>% 
   ggplot(aes(x = reorder(scenario, avg), y = avg)) + 
   geom_point(col = "darkred", fill = "darkred") + 
   geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), pch = 0) +
@@ -140,11 +200,12 @@ gdh %>%
 
 # Now lets look at immorality 
 
-gdi <- gd[str_which(gd$scenario, "_i"),]
+gdi <- gd[str_which(gd$scenario, "_i$"),]
 
 # Plot immorality
 
 gdi %>% 
+  mutate(scenario = str_remove(scenario, "_i$")) %>% 
   ggplot(aes(x = reorder(scenario, avg), y = avg)) + 
   geom_point(col = "darkred", fill = "darkred") + 
   geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), pch = 0) +
@@ -155,11 +216,12 @@ gdi %>%
 
 # Lastly let's look at unexpectedness 
 
-gdu <- gd[str_which(gd$scenario, "_u"),]
+gdu <- gd[str_which(gd$scenario, "_u$"),]
 
 # Plot Unexpectedness
 
 gdu %>% 
+  mutate(scenario = str_remove(scenario, "_u$")) %>% 
   ggplot(aes(x = reorder(scenario, avg), y = avg)) + 
   geom_point(col = "darkred", fill = "darkred") + 
   geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), pch = 0) +
@@ -169,6 +231,8 @@ gdu %>%
        title = "Perceptions of Unexpectedness")
 
 ```
+
+The results look expected and encouraging. The events that involve the breaching of taboos are conistently rated as immoral and unexpected and yet there is great uncertainty around them. This reflects the idea that the wrongness of these events is not immediately obvious. It is also quite striking that everyone provided the same answer for the harmfulness of "person kills another person". This indicates that the scenarios are indeed being interpreted as intended. 
 
 
 
