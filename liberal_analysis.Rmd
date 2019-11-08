@@ -16,6 +16,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(knitr)
 library(kableExtra)
+library(ggrepel)
+library(gridExtra)
 theme_set(theme_light())
 ```
 
@@ -173,7 +175,7 @@ d_long <- d_harm_long %>%
          unexpected = d_un_long$unexpected)
 ```
 
-At this point it would be useful to create a column for each moral foundation and to add the deflection to each event. 
+Now I am going to create a column for each moral foundation and I will also add the deflection to each event. 
 
 ```{r}
 
@@ -221,7 +223,9 @@ d_long <- d_long %>%
   left_join(events_def, by = "scenario")
 ```
 
-Now I am going to create a summary table for each question 
+## Descriptive Analysis 
+
+I am going to make some descriptive plots for the average scores for each question on all three dimensions. To do this I first need to create a summary table. 
 
 ```{r}
 
@@ -232,7 +236,7 @@ gd <- d %>%
   gather(key = "scenario", 
          value = "score") %>% 
   group_by(scenario) %>% 
-  summarise_all(funs(avg = mean(.), maximum = max(.), minimum = min(.), st_dv = sd(.))) %>% 
+  summarise_all(funs(avg = mean(.), med = median(.), maximum = max(.), minimum = min(.), st_dv = sd(.))) %>% 
   mutate(ci_lower = avg - 1.96*st_dv, 
          ci_upper = avg + 1.96*st_dv) 
 
@@ -262,11 +266,10 @@ gd <- gd %>%
          scenario = str_replace(scenario, "thls", "teacher_hits_lazy_student"), 
          scenario = str_replace(scenario, "whh", "wife_hits_husband"), 
          scenario = str_replace(scenario, "tmdp", "teenager_mocks_disabled"))
-  
 ```
 
 
-Now, we are in a position to start making some summary plots 
+Now that we have the table, we can produce the plots. 
 
 ```{r}
 
@@ -280,11 +283,13 @@ gdh %>%
   mutate(scenario = str_remove(scenario, "_h$")) %>% 
   ggplot(aes(x = reorder(scenario, avg), y = avg)) + 
   geom_point(col = "darkred", fill = "darkred") + 
+  geom_point(aes( y = med), col = "darkgreen", pch = 2) +
   geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper)) +
   coord_flip() + 
   labs(x = "", 
        y = "Ratings", 
-       title = "Perceptions of Harmfulness")
+       title = "Perceptions of Harmfulness", 
+       caption = "Circles = Mean \nTriangles = Median")
 
 # Now lets look at immorality 
 
@@ -296,11 +301,13 @@ gdi %>%
   mutate(scenario = str_remove(scenario, "_i$")) %>% 
   ggplot(aes(x = reorder(scenario, avg), y = avg)) + 
   geom_point(col = "darkred", fill = "darkred") + 
+  geom_point(aes( y = med), col = "darkgreen", pch = 2) +
   geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper)) +
   coord_flip() + 
   labs(x = "", 
        y = "Ratings", 
-       title = "Perceptions of Immorality")
+       title = "Perceptions of Immorality", 
+       caption = "Circles = Mean \nTriangles = Median")
 
 # Lastly let's look at unexpectedness 
 
@@ -312,12 +319,136 @@ gdu %>%
   mutate(scenario = str_remove(scenario, "_u$")) %>% 
   ggplot(aes(x = reorder(scenario, avg), y = avg)) + 
   geom_point(col = "darkred", fill = "darkred") + 
+  geom_point(aes( y = med), col = "darkgreen", pch = 2) +
   geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper)) +
   coord_flip() + 
   labs(x = "", 
        y = "Ratings", 
-       title = "Perceptions of Unexpectedness")
+       title = "Perceptions of Unexpectedness", 
+       caption = "Circles = Mean \nTriangles = Median")
 
 ```
+
+These plots are interesting. In general, they show the trends that we expected: the most obviously harmful events are those on top of the harmfulness scale and the same goes for the most obviously unexpected events. In this sense, the results are encouraging. 
+
+I am a bit concerned about the relatively wide confidence intervals. However, the spread of the data is interesting as well. For example, let's look at the harmfulness ratings for "man marries cousin" and "man makes love to his sister". The confidence intervals are quite wide. This is interesting because it suggests that there is quite a lot of disagreement about how harmful these events are. This speaks directly to Kurt's theory - debates about the gravity of purity transgressions might be related to the fact that we differ in the extent to which we consider these acts harmful. This is an interesting insight in itself. 
+
+We are also capable of recreating the plot from Gray and Keeney (2015), where they visualize the average severity of events and their "weirdness". In the next plot, then, I will put immorality in the x-axis and unexpectedness in the y-axis. 
+
+
+```{r}
+
+# create mean measures from the long dataset
+
+dsl <- d_long %>% 
+  group_by(scenario, type, def) %>% 
+  summarise(mean_harm = mean(harm), 
+            mean_imm = mean(immoral), 
+            mean_unex = mean(unexpected)) 
+
+
+# Recreate Gray and Keeney's plot
+
+dsl %>% 
+  ggplot(aes(x = mean_imm, y = mean_unex, col = type)) + 
+  geom_point() + 
+  geom_text_repel(aes(label = scenario), show.legend = F) + 
+  theme(legend.position = "bottom") + 
+  guides(text = F) + 
+  labs(x = "Immorality", 
+       y = "Unexpectedness", 
+       title = "Average Unexpectedness by Average Immorality",
+       subtitle = "Liberal Sub-sample")
+
+```
+
+This actually looks similar to what Gray and Keeney found. Some of he "purity" violations are consistently regarded as more unexpected than the rest of the transgressions. However, our data show that unexpectedness is quite highly correlated with immorality, which is a point that Gray and Keeney make but cannot really prove. 
+
+Let's look at the relationship between harm and unexpectedness, and harm and immorality. 
+
+```{r}
+
+# Plot harm by unexpectedness 
+
+dsl %>% 
+  ggplot(aes(x = mean_harm, y = mean_unex, col = type)) + 
+  geom_point() + 
+  geom_text_repel(aes(label = scenario), show.legend = F) + 
+  theme(legend.position = "bottom") + 
+  guides(text = F) + 
+  labs(x = "Harmfulness", 
+       y = "Unexpectedness", 
+       title = "Average Unexpectedness by Average Harmfulness",
+       subtitle = "Liberal Sub-sample")
+
+```
+
+Here we notice a similar relationship to the one above. 
+
+```{r}
+
+# Plot harmfulness by immorality
+
+dsl %>% 
+  ggplot(aes(x = mean_imm, y = mean_harm, col = type)) + 
+  geom_point() + 
+  geom_text_repel(aes(label = scenario), show.legend = F) + 
+  theme(legend.position = "bottom") + 
+  guides(text = F) + 
+  labs(x = "Immorality", 
+       y = "Harmfulness", 
+       title = "Average Harmfulness by Average Immorality",
+       subtitle = "Liberal Sub-sample")
+```
+
+The relationship forms almost a 45 degree line. This is incredibly strong; I bet Kurt would be delighted to see this. 
+
+To close this visualization section, I am going to look at how deflection relates to our three measures. 
+
+```{r}
+
+# Unexpectedness by deflection 
+
+dsl %>% 
+  ggplot(aes(x = def, y = mean_unex, col = type)) + 
+  geom_point() +
+  geom_text_repel(aes(label = scenario), show.legend = F) + 
+  theme(legend.position = "bottom") + 
+  guides(text = F) + 
+  labs(x = "Deflection", 
+       y = "Unexpectedness", 
+       title = "Average Unexpectedness by Deflection",
+       subtitle = "Liberal Sub-sample")
+
+
+# Immorality by deflection 
+
+dsl %>% 
+  ggplot(aes(x = def, y = mean_imm, col = type)) + 
+  geom_point() + 
+  geom_text_repel(aes(label = scenario), show.legend = F) + 
+  theme(legend.position = "bottom") + 
+  guides(text = F) + 
+  labs(x = "Deflection", 
+       y = "Immorality", 
+       title = "Average Immorality by Deflection",
+       subtitle = "Liberal Sub-sample")
+
+# Harmfulness by deflection 
+
+dsl %>% 
+  ggplot(aes(x = def, y = mean_harm, col = type)) + 
+  geom_point() + 
+  geom_text_repel(aes(label = scenario), show.legend = F) + 
+  theme(legend.position = "bottom") + 
+  guides(text = F) + 
+  labs(x = "Deflection", 
+       y = "Harmfulness", 
+       title = "Average Harmfulness by Deflection",
+       subtitle = "Liberal Sub-sample")
+
+```
+
+To an extent, our data show the results that are similar to what we expected. Deflection seems adequate to predict the values of events that obviously involve harm, but it really misses the mark when it comes trangressions that invole breaches of "purity". However, overall, I am surprised by how "weak" the relationship between deflection and unexpectedness is. 
 
 
