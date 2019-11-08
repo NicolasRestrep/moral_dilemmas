@@ -18,6 +18,13 @@ library(knitr)
 library(kableExtra)
 library(ggrepel)
 library(gridExtra)
+library(haven)
+library(lavaan)
+library(lme4)
+library(nlme)
+library(stargazer)
+library(broom)
+library(psych)
 theme_set(theme_light())
 ```
 
@@ -450,5 +457,34 @@ dsl %>%
 ```
 
 To an extent, our data show the results that are similar to what we expected. Deflection seems adequate to predict the values of events that obviously involve harm, but it really misses the mark when it comes trangressions that invole breaches of "purity". However, overall, I am surprised by how "weak" the relationship between deflection and unexpectedness is. 
+
+
+## First Analysis 
+
+I am going to try to fit a multi-level model to see what best predicts immorality. 
+
+I am going to scale all the variables first. 
+
+```{r}
+
+# Scale variables 
+
+d_long <- 
+  d_long %>% 
+  mutate(harm_z = as.numeric(scale(harm)) ,
+         immoral_z = as.numeric(scale(immoral)) ,
+         unexpected_z = as.numeric(scale(unexpected)), 
+         deflection_z = as.numeric(scale(def)), 
+         scenario = as.factor(scenario))
+```
+
+Now let's fit the model
+
+```{r}
+
+mod <- lmer(immoral_z ~ harm_z + unexpected_z + deflection_z + (1 | scenario), data = d_long)
+
+summary(mod)
+```
 
 
