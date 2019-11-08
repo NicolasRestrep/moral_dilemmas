@@ -9,28 +9,28 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Preliminary Analysis
+## Preliminary analysis of the liberal data 
 
 ```{r}
 # Packages 
-
 library(tidyverse)
 library(knitr)
 library(kableExtra)
 theme_set(theme_light())
 ```
 
-I am going to begin by loading in the data. 
+### Data Preparation 
+
+I am going to begin by loading the data. We get two different data sources so we need to merge them.  
 
 ```{r}
-
 # Load the data in 
 
-data <- read_csv("liberals_first.csv")
+second_data <- read_csv("liberals_complete.csv")
 
 # Get rid of the first two rows which are uninformative 
 
-data <- data[-(1:2), ]
+second_data <- second_data[-(1:2), ]
 
 # Load in data from the first batch 
 
@@ -40,19 +40,19 @@ p_data <- p_data[-(1:3), ]
 
 # Now bind them together 
 
-new_data <- rbind(data, p_data)
+data <- rbind(second_data, p_data)
 
 ```
 
-### Attention checks 
+Everything seems okay. We have 105 observations but this is before we filter for people who are not liberal and who did not pass the attention checks. 
 
-First, it would be important to see who passed the attention checks.
+Let's begin by filtering the respondents who fail the attention checks. 
 
 ```{r}
 
 # Get attention checks for the data 
 
-new_data <- new_data %>% 
+data <- data %>% 
   mutate(passed_1 = ifelse(ach_1_1 == "extremely harmful", 1, 0), 
          passed_2 = ifelse(ach_2_1 == "not at all immoral", 1, 0), 
          passed_3 = ifelse(ach_3_1 == "moderately unexpected", 1, 0), 
@@ -61,38 +61,38 @@ new_data <- new_data %>%
          passed_6 = ifelse(ach_6_1 == "extremely unexpected", 1, 0), 
          sum_pass = passed_1 + passed_2 + passed_3 + passed_4 + passed_5 + passed_6)
 
+
 # Now drop cases which did not pass the attention checks 
 
-new_data <- new_data %>% 
+data <- data %>% 
   filter(sum_pass == 6)
 
 ```
 
-### Checking the Pre-Screening
-
-For the purposes of this test, I told Prolific I only wanted liberal respondents. We can check whether the pre-screening did a good job. 
+Now, let's make sure we only have liberals in the sample.
 
 ```{r}
+# Create variable that indicates if someone is liberal
 
-new_data <- new_data %>% 
+data <- data %>% 
   mutate(liberal = ifelse(ideology_1 == 1 | ideology_1 == 2 | ideology_1 == 3, 1, 0)) 
 
 # Drop participants who are not liberal 
 
-new_data <- new_data %>% 
+data <- data %>% 
   filter(liberal == 1)
 
 ```
 
-### Analyzing the Data 
+In total, we have 99 usable observations. 
 
-I am going to recode the data so we get numbers instead of strings:
+I am also going to recode the data so we get numbers instead of strings. 
 
 ```{r}
 
-# Mutate all main questions 
+# Mutate all main questions so that we get numbers 
 
-data_recoded <- new_data %>% 
+data <- data %>% 
   mutate_at(vars(contains("_h_1")), funs(recode(., 
                                    "not at all harmful" = 1, 
                                    "slightly harmful" = 2, 
@@ -115,19 +115,19 @@ data_recoded <- new_data %>%
   
 ```
 
-Now, I am going to focus solely on the responses to events:
+For now, I am going to select only the responses to events:
 
 ```{r}
 
 # Get of of the first set of uninformative columns 
 
-data_recoded <- data_recoded %>% 
+d <- data %>% 
   select(-contains("ach")) %>% 
   select(pkp_h_1:msas_u_1)
 
 # Now let's create a more amenable dataset 
 
-d <- data_recoded %>% 
+d <- d %>% 
   mutate(id = 1:n()) %>% 
   select(id, everything()) 
 
@@ -139,6 +139,86 @@ d <- d %>%
     ) %>% 
   mutate_if(is.character, as.numeric)
 
+```
+
+At this point, it is also useful to put the data into a long format for multilevel analysis and in order to create certain visualizations. 
+
+```{r}
+
+# Reshape harmful perceptions from wide to long 
+
+d_harm_long <- d %>% 
+  select(id, contains("_h")) %>% 
+  gather(key = "scenario", value = "harm", 2:26) %>% 
+  mutate(scenario = str_remove(scenario, "_h$"))
+
+# Reshape immoral perceptions from wide to long 
+
+d_imm_long <- d %>% 
+  select(id, contains("_i")) %>% 
+  gather(key = "scenario", value = "immoral", 2:26) %>% 
+  mutate(scenario = str_remove(scenario, "_i$"))
+
+# Reshape unexpected perceptions from wide to long 
+
+d_un_long <- d %>% 
+select(id, contains("_u")) %>% 
+  gather(key = "scenario", value = "unexpected", 2:26) %>% 
+  mutate(scenario = str_remove(scenario, "_u$"))
+
+# Now join them 
+
+d_long <- d_harm_long %>% 
+  mutate(immoral = d_imm_long$immoral, 
+         unexpected = d_un_long$unexpected)
+```
+
+At this point it would be useful to create a column for each moral foundation and to add the deflection to each event. 
+
+```{r}
+
+# Load dataset with the deflections 
+
+selected_events <- read_csv("selected_events.csv")
+
+# Create column for abreviations 
+
+events <- c("pch", 
+            "pkp", 
+            "tmdp", 
+            "adr", 
+            "elb", 
+            "acr", 
+            "jbd", 
+            "scc", 
+            "ddf", 
+            "git", 
+            "idb", 
+            "ayc", 
+            "sip", 
+            "ecc", 
+            "ccr", 
+            "mbr", 
+            "msn", 
+            "mbw", 
+            "php", 
+            "mmc", 
+            "mmls", 
+            "msas", 
+            "mpsa", 
+            "whh", 
+            "thls")
+
+# Create new column 
+
+events_def <- selected_events %>% 
+  mutate(scenario = events) %>% 
+  select(scenario, def, type)
+
+# Add to long dataset 
+
+d_long <- d_long %>% 
+  left_join(events_def, by = "scenario")
 ```
 
 Now I am going to create a summary table for each question 
@@ -200,7 +280,7 @@ gdh %>%
   mutate(scenario = str_remove(scenario, "_h$")) %>% 
   ggplot(aes(x = reorder(scenario, avg), y = avg)) + 
   geom_point(col = "darkred", fill = "darkred") + 
-  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), pch = 0) +
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper)) +
   coord_flip() + 
   labs(x = "", 
        y = "Ratings", 
@@ -216,7 +296,7 @@ gdi %>%
   mutate(scenario = str_remove(scenario, "_i$")) %>% 
   ggplot(aes(x = reorder(scenario, avg), y = avg)) + 
   geom_point(col = "darkred", fill = "darkred") + 
-  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), pch = 0) +
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper)) +
   coord_flip() + 
   labs(x = "", 
        y = "Ratings", 
@@ -232,7 +312,7 @@ gdu %>%
   mutate(scenario = str_remove(scenario, "_u$")) %>% 
   ggplot(aes(x = reorder(scenario, avg), y = avg)) + 
   geom_point(col = "darkred", fill = "darkred") + 
-  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), pch = 0) +
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper)) +
   coord_flip() + 
   labs(x = "", 
        y = "Ratings", 
