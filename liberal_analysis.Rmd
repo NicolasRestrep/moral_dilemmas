@@ -25,6 +25,7 @@ library(nlme)
 library(stargazer)
 library(broom)
 library(psych)
+library(brms)
 theme_set(theme_light())
 ```
 
@@ -482,7 +483,11 @@ Now let's fit the model
 
 ```{r}
 
-mod <- lmer(immoral_z ~ harm_z + unexpected_z + deflection_z + (1 | scenario), data = d_long)
+mod <- brm(data = d_long, 
+           formula = immoral_z ~ 1 + harm_z + unexpected_z + deflection_z + (1 | scenario) + (1 | id), family = gaussian, iter = 6000, 
+           warmup = 1000, 
+           cores = 4, 
+           chains = 4)
 
 summary(mod)
 ```
