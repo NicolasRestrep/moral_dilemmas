@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = F, warning = F)
 ```
 
 ## Preliminary analysis of the liberal data 
@@ -125,7 +125,7 @@ data <- data %>%
   
 ```
 
-For now, I am going to select only the responses to events:
+For now, I am going to select only the ratings for each event (no demographic questions):
 
 ```{r}
 
@@ -457,12 +457,12 @@ dsl %>%
 
 ```
 
-To an extent, our data show the results that are similar to what we expected. Deflection seems adequate to predict the values of events that obviously involve harm, but it really misses the mark when it comes trangressions that invole breaches of "purity". However, overall, I am surprised by how "weak" the relationship between deflection and unexpectedness is. 
+To an extent, our data show the results that are similar to what we expected. Deflection seems adequate to predict the values of events that obviously involve harm, but it really misses the mark when it comes trangressions that invole breaches of "purity". However, overall, I am surprised by how weak the relationship between deflection and unexpectedness is. 
 
 
 ## First Analysis 
 
-I am going to try to fit a multi-level model to see what best predicts immorality. 
+I am going to try to fit a multi-level model to see what best predicts immorality. For this initial exploratory model, I will be using brms with flat priors. I will let the intercepts for participants and scenarios vary, but here I won't explore more co-variances. 
 
 I am going to scale all the variables first. 
 
@@ -481,10 +481,12 @@ d_long <-
 
 Now let's fit the model
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 
 mod <- brm(data = d_long, 
-           formula = immoral_z ~ 1 + harm_z + unexpected_z + deflection_z + (1 | scenario) + (1 | id), family = gaussian, iter = 6000, 
+           formula = immoral_z ~ 1 + harm_z + unexpected_z + deflection_z + (1 | scenario) + (1 | id), 
+           family = gaussian, 
+           iter = 6000, 
            warmup = 1000, 
            cores = 4, 
            chains = 4)
@@ -492,4 +494,21 @@ mod <- brm(data = d_long,
 summary(mod)
 ```
 
+As we saw, harm and unexpectedness are good predictors of immorality but deflection does not seem to add more information. This is, of course, a very preliminary model. 
 
+I am going to try to run one last exploratory model to see how well deflection predicts unexpectedness, when we take into account IDs and the type of scenario. Again, intercepts are allowed to vary for participants and for each scenario. 
+
+```{r message=FALSE, warning=FALSE}
+
+mod2 <- brm(data = d_long, 
+           formula = unexpected_z ~ 1 + deflection_z + (1 | id) + (1 | scenario), 
+           family = gaussian, 
+           iter = 6000, 
+           warmup = 1000, 
+           cores = 4, 
+           chains = 4)
+
+summary(mod2)
+```
+
+The data we have collected so far suggests that deflection is not very informative for predicting unexpectedness. Nonetheless, we need to explore more precise model specifications when the whole sample is available. 
