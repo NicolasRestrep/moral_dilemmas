@@ -1,0 +1,70 @@
+---
+title: "Conservative Pre-test"
+author: "Nicolas Restrepo"
+date: "11/15/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Analysis 
+
+```{r}
+library(tidyverse)
+```
+
+Load in the data 
+
+```{r}
+
+# Load in the data
+data <- read_csv("data/conservative_test.csv")
+
+#Get rid of the first 2 rows 
+
+data <- data[-(1:2), ]
+
+
+```
+
+Now check for attention checks 
+
+```{r}
+# Get attention checks for the data 
+
+data <- data %>% 
+  mutate(passed_1 = ifelse(ach_1_1 == "extremely harmful", 1, 0), 
+         passed_2 = ifelse(ach_2_1 == "not at all immoral", 1, 0), 
+         passed_3 = ifelse(ach_3_1 == "moderately unexpected", 1, 0), 
+         passed_4 = ifelse(ach_4_1 == "not at all harmful", 1, 0), 
+         passed_5 = ifelse(ach_5_1 == "extremely immoral", 1, 0), 
+         passed_6 = ifelse(ach_6_1 == "extremely unexpected", 1, 0), 
+         sum_pass = passed_1 + passed_2 + passed_3 + passed_4 + passed_5 + passed_6)
+
+
+# Now drop cases which did not pass the attention checks 
+
+data %>% 
+  group_by(sum_pass) %>% 
+  summarise(n())
+  
+
+```
+
+Everyone passed the attention checks! 
+
+```{r}
+
+# Create variable that indicates if someone is conservative
+
+data <- data %>% 
+  mutate(conservative = ifelse(ideology_1 == 5 | ideology_1 == 6 | ideology_1 == 7, 1, 0)) 
+
+data %>% 
+  group_by(conservative) %>% 
+  summarise(n())
+```
+
+Everyone is conservative. 
