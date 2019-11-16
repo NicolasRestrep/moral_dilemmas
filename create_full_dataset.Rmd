@@ -319,15 +319,15 @@ Lastly, let me get the individual differences
 ```{r}
 
 selected_events <- selected_events %>% 
-  mutate(dae = ae - pae, 
-         daa = aa - paa, 
-         dap = ap - pap, 
-         dbe = be - pbe, 
-         dbp = bp - pbp, 
-         dba = ba - pba, 
-         doe = oe - poe, 
-         dop = op - pop, 
-         doa = oa - poa)
+  mutate(dae = pae - ae, 
+         daa = paa - aa, 
+         dap = pap - ap, 
+         dbe = pbe - be, 
+         dbp = pbp - bp, 
+         dba = pba - ba, 
+         doe = poe - oe, 
+         dop = pop - op, 
+         doa = poa - oa)
 ```
 
 Now, let's save the file 
