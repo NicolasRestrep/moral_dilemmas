@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
 ```
 
 ## Data Preparation
@@ -222,6 +222,11 @@ events_def <- selected_events %>%
 d_long <- d_long %>% 
   left_join(events_def, by = "scenario")
 
+# Create a variable for negative behavior 
+
+d_long <- d_long %>% 
+  mutate(neg_beh = ifelse(be < 0, 1, 0))
+
 ```
 
 Alright, now we are done with the data preparation. We can move on to some descriptive analysis. 
@@ -331,7 +336,7 @@ gdu %>%
 
 ```
 
-The data show similar patterns to the ones we had identified before. A person killing a person is consistently considered the most immoral and the most harmful scenario. A mother sexually arousing her son is, in turn, considered to be the most unexpected event. Again, there are interesting patterns of agreement and disagreement. The middle 50% of the sample said that killing and mother/son incest are extremely immoral. The IQR is equally narrow for the perceptions of harmfulness of killing. This tells us that the respondents interpreted the scenarios "consistently. Interestingly, there is considerable disgreement about the harmfulness of a man marrying his cousin, a man making love to his sister, and a man procuring a prostitute. I genuinely think this is a very interesting insight: it suggests that the debates around the wrongness of purity transgressions might be related to the fact that we differ in the extent to which we consider these acts harmful.
+The data show similar patterns to the ones we had identified before. A person killing a person is consistently considered the most immoral and the most harmful scenario. A mother sexually arousing her son is, in turn, considered to be the most unexpected event. Again, there are interesting patterns of agreement and disagreement. The middle 50% of the sample said that killing and mother/son incest are extremely immoral. The IQR is equally narrow for the perceptions of harmfulness of killing. This tells us that the respondents interpreted the scenarios consistently. Interestingly, there is considerable disgreement about the harmfulness of a man marrying his cousin, a man making love to his sister, and a man procuring a prostitute. I genuinely think this is a very interesting insight: it suggests that the debates around the wrongness of purity transgressions might be related to the fact that we differ in the extent to which we consider these acts harmful.
 
 We can look at whether the harmfulness ratings for purity trangressions differ between conservatives and liberals. 
 
@@ -350,16 +355,16 @@ d_long %>%
 
 ```
 
-Here, conservatives are on the right and liberals on the left. Even though they seem to agree on the ranking of harmfulness of purity trangressions, liberals seem overall more permissive. This is particularly true for adultery and prostitution. 
+Here, conservatives are on the right and liberals on the left. Even though they seem to agree on the ranking of the harmfulness of purity trangressions, liberals seem overall more permissive. This is particularly true for adultery and prostitution. 
 
-The data allow us to recreate the plot from Gray and Keeney (2015), where they visualize the average severity of events and their "weirdness". In the next plot, then, I will put immorality in the x-axis and unexpectedness in the y-axis. 
+The data also allow us to recreate the plot from Gray and Keeney (2015), where they visualize the average severity of events and their "weirdness". In the next plot, then, I will put immorality in the x-axis and unexpectedness in the y-axis. 
 
 ```{r}
 
 # create mean measures from the long dataset
 
 dsl <- d_long %>% 
-  group_by(scenario, type, def, be) %>% 
+  group_by(scenario, type, def, dop) %>% 
   summarise(mean_harm = mean(harm), 
             mean_imm = mean(immoral), 
             mean_unex = mean(unexpected)) 
@@ -463,7 +468,7 @@ To an extent, our data show the results that are similar to what we expected. De
 
 ## First Analysis 
 
-I am going to try to fit a multi-level model to see what best predicts immorality. For this initial exploratory model, I will be using nlme. I will let the intercepts for participants and scenarios vary, but here I won't explore more co-variances. 
+I am going to try to fit multi-level models to see what best predicts immorality. For these initial exploratory models, I will be using nlme. I will let the intercepts for participants and scenarios vary, but here I won't explore more co-variances. 
 
 I am going to scale all the variables first. 
 
@@ -471,41 +476,45 @@ I am going to scale all the variables first.
 # Scale all variables before the analysis
 d_long_scaled <- 
   d_long %>% 
-  mutate_at(c("id", "type", "scenario", "conservative"), ~as.factor(.)) %>% 
+  mutate_at(c("id", "type", "scenario", "conservative", "neg_beh"), ~as.factor(.)) %>% 
   mutate_if(is.numeric, scale)
 ```
 
-Now, I am going to predict immorality on our main questions 
+Now, I am going to predict immorality on our main questions. In the most complex model, I will include an interaction effect between conservatism and the type of moral foundation. This accounts for the idea that political ideology mediates how much weight is placed on the different moral foundations. 
 
 ```{r}
 
 # Fit initial model
-m1 <- lme( fixed = immoral ~ harm + def + unexpected,
+m1 <- lme(fixed = immoral ~ harm + def + unexpected,
            data = d_long_scaled,
-           random =  ~  1 | scenario/id)
+           random =  ~  1  | scenario/id)
 
 summary(m1)
 
 # Fit model controlling for conservatism 
-m2 <- lme( fixed = immoral ~ harm + def + unexpected + conservative,
+m2 <- lme(fixed = immoral ~ harm + def + unexpected + conservative,
            data = d_long_scaled,
            random =  ~  1 | scenario/id)
 
 summary(m2)
 
-# Add moral foundations to the model
-m3 <- lme( fixed = immoral ~ harm + def + unexpected + conservative + type,
+# Add moral foundations to the model and add an interaction with conservatism
+m3 <- lme(fixed = immoral ~ harm + def + unexpected + conservative*type,
            data = d_long_scaled,
            random =  ~  1 | scenario/id)
 
 summary(m3)
 ```
 
-Here, the best fitting model is actually the most parsimonious one. Harm significantly predicts immorality and so does unexpectedness. Deflection, however, is a poor predictor of wrongdoing. The difference between liberals and conservatives is significant but not considerable. 
+Here, the best fitting model is actually the most parsimonious one. Harm significantly predicts immorality and so does unexpectedness. Deflection, however, is a poor predictor of wrongdoing. One thing to take into account here is that there is not a lot of variation in deflection - we only have 25 data points - and, therefore, establishing relationships can be difficult. However, the sign and the magnitudes of the coefficients do not speak favorably of deflection's capacity to predict immorality. 
 
-Now, let's try to look at deflection's capacity to account for unexpectedness.
+The third model is worth mentioning. Although the difference between conservatives and liberals is significant, it is not necessarily considerable. Interestingly, though, the interaction effects are also significant. The effect of "purity" on immorality, for instance, is bigger amongst conservatives than it is amongst liberals. Given the small overall differences, nonetheless, it is important not to overemphasize these mediating effects. However, it is a finding worth noting. 
+
+Perhaps a more direct test of deflection's explanatory power in the moral domain would be to test its capacity to account for unexpectedness.
 
 ```{r}
+
+# Unexpectedness exaplained by harm, immorality, and deflection
 
 m4 <- lme( fixed = unexpected ~ 1 + def + harm + immoral,
            data = d_long_scaled,
@@ -515,37 +524,63 @@ summary(m4)
 
 ```
 
-This model suggests that, in our data, deflection is not very informative for predicting unexpectedness. Harm and immorality, however, are good predictors of unexpectedness. Again, this speaks of the interrelationship between these concepts but does not tell us much about ACT's capcity to help us understand these relationships. 
+This model suggests that, in our data, deflection is not very informative for predicting unexpectedness, unlike harm and immorality. The coefficient for deflection, here, is on the verge of significance but its sign is the opposite of what one would expect. The model suggests that as deflection goes up, unexpectedness goes down. Undoubtedly, this result is being influenced by the low deflection / high unexpectedness events such as incest. 
+
+We can have a deeper look at whether the EPA profiles themselves tell us something about the immorality of acts. Similarly, we can examine whether transformations in these values - the individual components of deflection - are more informative than the aggregate value. I don't think we should put all these predictors in the same model due to multicollinearity - EPA profiles and subsequent tranformations carry much of the same information. I will then fit two models: one for the EPA profiles of actors, behaviors, and objects; the second, for the difference between those values and the transient impressions. 
 
 ```{r}
 
-m5 <- lme(fixed = immoral ~ 1  + dae + dap + daa + dbe + dbp + dba + doe + dop + doa,
+# Immorality predicted by the individual EPA profiles 
+
+m5 <- lme(fixed = immoral ~ 1 + ae + ap + aa + be + bp + ba + oe + op + oa,
            data = d_long_scaled,
            random =  ~  1 | scenario/id)
 
 summary(m5)
 
-m6 <- lme(fixed = immoral ~ 1 + ae + ap + aa + be + bp + ba + oe + op + oa,
+# Immorality predicted by the transformations in EPA profiles 
+
+m6 <- lme(fixed = immoral ~ 1  + dae + dap + daa + dbe + dbp + dba + doe + dop + doa,
            data = d_long_scaled,
            random =  ~  1 | scenario/id)
 
 summary(m6)
-
 ```
+
+Both models seem to fit the data poorly (their BICs are quite high). Again, they suggests that these data do not allow us to make any solid inferences about the relationship between the EPA profiles associated with the elements of moral statements and their perceived immorality. The only value that comes close to the threshold of significance is the potency of the behavior. As behaviors become more potent, immorality appears to increase. However, we cannot draw strong conclusions from this. 
+
+The second model is similar in its poor fit and in the high p-values of its coefficients. One coefficient, nonetheless, reaches significance: the change in potency of the object. It might appear counterintuitive but it's an artifact of the scale. All chosen events except for one - a person hires a prostitute - lower the potency of the object. However, the events that seem to lower the potency of the object the least are amongst the most immoral - such as a person hurting a child or a teacher hitting a lazy student. In this dataset, then, the events that lower the potency of the object the least are associated with more perceived immorality. Given that the scales are centered, this is what the coefficient is telling us. 
+
+I will close this preliminary analysis by examining the predictive capacity of the EPA profiles - and the differences - when we exclude the purity trangressions. The rationale here is that ACT does a poor job predicting the deflection of these type of moral wrongdoings. If we exclude them, then, we could see whether this theory can pick up some generalities about the other set of trangressions. 
+
 
 ```{r}
 
-m8 <- lme( fixed = immoral ~ 1 + dae + dap + daa + dbe + dbp + dba + doe + dop + doa,
+# Run model with EPA scores on a sample excluding the purity scenarios 
+m8 <- lme( fixed = immoral ~ 1 + ae + ap + aa + be + bp + ba + oe + op + oa,
            data = filter(d_long_scaled, type != "purity"),
            random =  ~  1 | scenario/id)
 
 summary(m8)
 
-m9 <- lme( fixed = immoral ~ 1 + ae + ap + aa + be + bp + ba + oe + op + oa,
+m9 <- lme( fixed = immoral ~ 1 + dae + dap + daa + dbe + dbp + dba + doe + dop + doa,
            data = filter(d_long_scaled, type != "purity"),
            random =  ~  1 | scenario/id)
 
 summary(m9)
 
 ```
+
+The first thing to notice is that the BICs for these models is dramatically lower. We cannot compare them directly with the models fit above because the number of observations is not the same. However, it is worth bearing in mind that the EPA values seem to be a lot more informative when the purity scenarios are excluded. 
+
+The first model shows interesting results. The coefficients for the behavior's evaluation and the object's potency are both significant. This resonates with Kurt's theory. As the evaluation of the behaviors go up, the immorality of a scenario sinificantly decreases. This is - reassuringly - what we would expect: behaviors that have low-evaluation are perceived as more immoral. The coefficient for the object's potency, in turn, suggests that as this value increases, the immorality of the act tends to decrease. I think this is an important finding because it speaks directly to Kurt's idea of vulnerability. As actors appear less potent, the behaviors directed at them are considered more immoral. This adds plausibility to the notion that the vulnerability of the victim is key when assessing immorality. 
+
+## Conclusion
+
+Let me recap some of the most important points here. 
+
+1) We can show results similar to those presented by Gray and Keeney but we can also extend them. We have more data to show that unexpectedness is tied to immorality and that "purity" transgressions are still considered quite harmful. 
+
+2) Deflection and EPA components are not predictive of immorality. However, when we exclude the purity scenarios from the analysis, we notice that EPAs are informative in predictable yet interesting ways. I think this works well with what we have been thinking. Deflections and EPA fail when it comes to purity scenarios because these events have "weird" structures: they involve good behaviors, which usually don't lower the potency of objects very much. If this line of argument is defensible - and methodologically sound - we have made good progress in explaining what's "weird" about harmless wrongs. 
+
 
