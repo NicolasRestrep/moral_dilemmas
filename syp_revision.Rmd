@@ -1,0 +1,52 @@
+---
+title: "Second Year Paper"
+subtitle: "Revised Statement"
+author: "Nicolas Restrepo"
+date: "11/30/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Research Question 
+
+Can the underlying semantic properties of moral scenarios help explain how transgressions are differentially interpreted and categorized? 
+
+## Literature Review
+
+### Ascription of Immorality
+
+Individuals and groups must constantly classify and categorize moral transgressions; they must decide what kind of violations go together and, especially, they must sort these categories according to their perceived severity. There is widespread debate amongs social scientists interested in morality regarding the processes that underpin the categorization of moral wrongdoing. Currently, the most plausible account contends that we attribute moral wrongdoing through prototypical association. In other words, we compare violations to a mental template of what an immoral act must look like, and severity is ascribed to the extent that the act we perceived resembles that template. Here, I contend that by looking at the connotative meanings associated with different moral vignettes, we can get a clearer idea of what this template looks like. Furthermore, analyzing the semantic properties of moral vignettes can help us disentangle what makes certain scenarios prototypical, and how deviations from those prototypes can explain differences in how we classify moral transgressions. 
+
+The debate about the attribution of immorality has currently two main contenders: those who argue that moral trangressions inherently belong to different categories and those who portend that they are ordered along the same continuum. The former are most famously represented by Haidt and Graham's Moral Foundations Theory. This line of work argues that human beings have cognitive modules that are sensitive to specific stimuli and which have given rise to a specific set of moral prohibitions (Haidt and Joseph, 2007). For example, we have a module for purity, which originally prompted us to stay clear of pathogens by eliciting a sense of disgust. This has developed into a set of moral taboos about, say, sex and bodily excretions. Authors like Gray and Schein (2018), in turn, contend that notions of morality are fundamentally mediated by perceptions of harm (Schein and Gray, 2018). Perceptions of harm, in turn, are dyadic: they involve the image of a cognizant agent acting upon a patient (Gray et al., 2012). This dyadic mental map provides a fuzzy prototype against which we judge actions in order to examine their moral status. Acts that appear to involve an agent causing harm to a subject are deemed to be immoral and social norms are established around them. However, social conventions that seem to have no immediately harmful consequences can also become moralized when analyzed through this same template. Disobeying dietary taboos, then, is said to cause harm, whether to one’s soul or to the ancestors’ spirits. Thus, a coherent logic - that of harm - underpins moral cognition. 
+
+Currently, empirical evidence favors the idea that moral wrongdoing is attributed through prototypical thinking. Gray and Keeney (2015) argue convincingly that the presumably distinct moral modules - or foundations - are all highly correlated with one another. Different moral prohibitions, then, seem to be cut from the same cloth, and cannot be neatly parceled out into distinct groups (Gray and Keeney, 2015). The corollary implication, then, is that differences in how moral trangressions are interpreted arise due to deviations from a general prototype; the image of a cognizant agent deliberately causing harm to a vulnerable victim. This account relies heavily on Wittgenstein's idea that category membership is ascribed, not through a set of exlusionary criteria, but rather due to proximity to a prototype. Categories should not be conceived as clearly delineated groups. Instead, they should be understood as loose collections of elements that are - to different extents - proximate to a mental prototype. The classic example is that robins are closer to the prototype of birds than ostriches, even if both fit the scientific criteria for membership in that group. There is ample evidence from cognitive science that, at a cognitive level, categorization does indeed occur through prototypical association. Gray and Schein (2018) themselves have shown that individuals categorize actions as immoral more quickly when the acts involve harm. Thus, the most cognitively plausible account of the attribution of immorality suggests that we classify moral violations based on their similarities and differences with a fuzzy mental template.
+
+Though convincing, Gray and Schein's (2018) account still leaves crucial questions unanswered. Although they argue convincingly for the importance of a prototypical moral dyad, they do not delve deeper into the characteristics of this template. The content of the template, for instance, remains opaque. It remains unclear what makes an action immediately harmful or a victim obviously vulnerable. If harmfulness and vulnerability themselves depend on immorality, then the theory would quickly fall into circularity. Furthermore, we do not know whether the prototypical dyad varies between cultures and across time. Recent research untertaken by sociologists suggests that prototypical cognition is an eminently social process; our readiness to say who counts as African-American or as poor changes depending on the social positions in which we are embedded. The argument here is that we can begin answering some of this questions by making use of well-established sociological techniques. 
+
+### Underlying Semantic Structures 
+
+Research about moral cognition has often used fictional scenarios to examine how respondents assess immorality. The abovementioned debate relies mostly on evidence that stems from using this type of vignettes. These fictional scenarios tend to share a grammatical structure (actor-behavior-object) which is, incidentally, the main unit of analysis of Affect Control Theory (ACT). This means that we take advantage of the dictionaries of affective meanings collected by ACT scholars to translate moral scenarios to a format that allows us to examine their underlying connotative meanings. 
+
+ACT starts from the premise that individuals attach affective meanings to social concepts and that those semantic structures can be reduced to a set of measurable dimensions. Building on Osgood et al.’s (1957) work, it contends that there are three basic dimensions of meaning: evaluation, potency, and activity. Evaluation pertains to characteristics such as goodness and badness. Potency, in turn, captures notions of power and weakness, while Activity relates to issues of liveliness and quietness. Osgood et al.’s (1975) extensive research demonstrates the cross-cultural validity of these dimensions of affective meaning. 
+
+Using these dimensions, it is possible to measure the affective meanings cultures attach to social concepts. The measuring technique used is called semantic differentials: respondents are asked to rate a series of concepts on a scale ranging from, for example, very weak to very strong. The averages of all three dimensions then are computed (Heise, 1979) and each concept is assigned an EPA profile, known as the fundamental sentiment. ACT researchers have leveraged this technique to collect large dictionaries of affective meaning in different cultures, ranging from Japan to Canada (Mackinnon and Robinson, 2014). They capture meaning remarkably well: babies, for instance, are described as very good, very weak, and somewhat lively, while murderers are depicted as very bad, very powerful, and slightly active. Though not all babies – or murderers – are the same, these profiles closely mirror the sentiments that we attach to these identities. By locating social concepts in a three-dimensional semantic space, we can shed light on the symbolic structures through which cultures organize the social world.
+
+ACT also offers a formal framework for understading how social interactions unfold. As mentioned above, the theory furthers that we understand such events through a simple grammatical form: we see an Actor directing a Behavior towards an Object. We define such situations by labelling the interactants and the behavior – i.e. by attaching appropriate connotative meanings to them. As a result, we engender a set of expectations about how the interaction might occur. Events can change our perceptions of the agents and objects involved, and ACT provides detailed mathematical equations that help calculate how those perceptions are likely to change. The theory, then, does not only offer a way of measuring affective meanings but also a mathematical framework for examining how these meanings change through the course of interaction. 
+
+In ACT, then, we have a powerful framework that can help us analyze more dimensions of moral vignettes. For instance, we can enquire into the affective meanings of prototypically harmful acts such as "murder" or characteristically vulnerable patients such as "children". Additionally, we can explore whether immorality is associated with predictable changes in the meanings we associate with the agents and objects involved in the transgression. Perhaps more importantly, we can explore the underlying similarities in the semantic structures of moral scenarios to shed light on the features that make certain transgressions more or less prototypical. This is precisely what we seek to do in the following analysis. 
+
+## Preliminary Results 
+
+The data presented here were collected using Prolific. We provided participants (n = 194) with a list of 25 moral vignettes and asked them about the extent to which they considered each scenario harmful, immoral, and unexpected. 
+
+
+
+
+
+
+
+
+
