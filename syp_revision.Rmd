@@ -40,7 +40,7 @@ In ACT, then, we have a powerful framework that can help us analyze more dimensi
 
 ## Preliminary Results 
 
-The data presented here were collected using Prolific. We provided participants (n = 194) with a list of 25 moral vignettes and asked them about the extent to which they considered each scenario harmful, immoral, and unexpected. 
+The data presented here were collected using Prolific. We provided participants (n = 205) with a list of 25 moral vignettes and asked them about the extent to which they considered each scenario harmful, immoral, and unexpected. After filtering for missed attention checks, we have a total of 194 usable responses (99 liberals and 95 conservatives). 
 
 
 
