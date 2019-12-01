@@ -7,7 +7,228 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = F, warning = F, message = F, fig.align='center')
+```
+
+```{r packages}
+# Packages 
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(ggrepel)
+library(gridExtra)
+library(haven)
+library(lavaan)
+library(lme4)
+library(nlme)
+library(stargazer)
+library(broom)
+library(psych)
+library(brms)
+library(plotly)
+theme_set(theme_light())
+
+# Load in the conservative data
+c_data <- read_csv("data/conservatives_full.csv")
+
+#Get rid of the first 2 rows 
+
+c_data <- c_data[-(1:2), ]
+
+# Load pretest data 
+
+p_data <- read_csv("data/pretest.csv")
+
+p_data <- p_data[-(1:3), ]
+
+# Load the liberal data 
+
+l_data <- read_csv("data/liberals_complete.csv")
+
+l_data <- l_data[-(1:2),]
+
+# Now bind them together 
+
+data <- rbind(c_data, p_data, l_data)
+
+# Get attention checks for the data 
+
+data <- data %>% 
+  mutate(passed_1 = ifelse(ach_1_1 == "extremely harmful", 1, 0), 
+         passed_2 = ifelse(ach_2_1 == "not at all immoral", 1, 0), 
+         passed_3 = ifelse(ach_3_1 == "moderately unexpected", 1, 0), 
+         passed_4 = ifelse(ach_4_1 == "not at all harmful", 1, 0), 
+         passed_5 = ifelse(ach_5_1 == "extremely immoral", 1, 0), 
+         passed_6 = ifelse(ach_6_1 == "extremely unexpected", 1, 0), 
+         sum_pass = passed_1 + passed_2 + passed_3 + passed_4 + passed_5 + passed_6)
+
+# Now drop cases which did not pass the attention checks 
+
+data <- data %>% 
+  filter(sum_pass == 6)
+
+# Create variable that indicates if someone is conservative
+
+data <- data %>% 
+  mutate(conservative = ifelse(ideology_1 == 5 | ideology_1 == 6 | ideology_1 == 7, 1, 0)) 
+
+
+# Mutate all main questions so that we get numbers 
+
+data <- data %>% 
+  mutate_at(vars(contains("_h_1")), funs(recode(., 
+                                   "not at all harmful" = 1, 
+                                   "slightly harmful" = 2, 
+                                   "moderately harmful" = 3, 
+                                   "very harmful" = 4, 
+                                   "extremely harmful" = 5))) %>% 
+  mutate_at(vars(contains("_i_1")), funs(recode(., 
+                                   "not at all immoral" = 1, 
+                                   "slightly immoral" = 2, 
+                                   "moderately immoral" = 3, 
+                                   "very immoral" = 4, 
+                                   "extremely immoral" = 5))) %>% 
+  mutate_at(vars(contains("_u_1")), funs(recode(., 
+                                   "not at all unexpected" = 1, 
+                                   "slightly unexpected" = 2, 
+                                   "moderately unexpected" = 3, 
+                                   "very unexpected" = 4, 
+                                   "extremely unexpected" = 5)))
+
+
+# Get of of the first set of uninformative columns 
+
+d <- data %>% 
+  select(-contains("ach")) %>% 
+  select(pkp_h_1:msas_u_1, ideology_1, conservative)
+
+# Now let's create a more amenable dataset 
+
+d <- d %>% 
+  mutate(id = 1:n()) %>% 
+  select(id, everything()) 
+
+# Rename all variables 
+
+d <- d %>%  
+  rename_all(
+    funs(str_remove(., "_1"))
+    ) %>% 
+  mutate_if(is.character, as.numeric)
+
+
+# Reshape harmful perceptions from wide to long 
+
+d_harm_long <- d %>% 
+  select(id, ideology, conservative, contains("_h")) %>% 
+  gather(key = "scenario", value = "harm", 4:28) %>% 
+  mutate(scenario = str_remove(scenario, "_h$"))
+
+# Reshape immoral perceptions from wide to long 
+
+d_imm_long <- d %>% 
+  select(id, ideology, conservative, contains("_i")) %>% 
+  gather(key = "scenario", value = "immoral", 4:28) %>% 
+  mutate(scenario = str_remove(scenario, "_i$"))
+
+# Reshape unexpected perceptions from wide to long 
+
+d_un_long <- d %>% 
+select(id, ideology, conservative, contains("_u")) %>% 
+  gather(key = "scenario", value = "unexpected", 4:28) %>% 
+  mutate(scenario = str_remove(scenario, "_u$"))
+
+# Now join them 
+
+d_long <- d_harm_long %>% 
+  mutate(immoral = d_imm_long$immoral, 
+         unexpected = d_un_long$unexpected)
+
+# Load dataset with the deflections 
+
+selected_events <- read_csv("data/full_events.csv")
+
+# Create column for abreviations 
+
+events <- c("pch", 
+            "pkp", 
+            "tmdp", 
+            "adr", 
+            "elb", 
+            "acr", 
+            "jbd", 
+            "scc", 
+            "ddf", 
+            "git", 
+            "idb", 
+            "ayc", 
+            "sip", 
+            "ecc", 
+            "ccr", 
+            "mbr", 
+            "msn", 
+            "mbw", 
+            "php", 
+            "mmc", 
+            "mmls", 
+            "msas", 
+            "mpsa", 
+            "whh", 
+            "thls")
+
+# Create new column 
+
+events_def <- selected_events %>% 
+  mutate(scenario = events) %>% 
+  select(scenario, def, type, 5:33)
+
+# Add to long dataset 
+
+d_long <- d_long %>% 
+  left_join(events_def, by = "scenario")
+
+# Create a variable for negative behavior 
+
+d_long <- d_long %>% 
+  mutate(neg_beh = ifelse(be < 0, 1, 0))
+
+
+# create a summary table for the values of each question 
+
+gd <- d %>% 
+  select(-c(id, ideology, conservative)) %>% 
+  gather(key = "scenario", 
+         value = "score") %>% 
+  group_by(scenario) %>% 
+  summarise_all(funs(med = median(.), avg = mean(.), maximum = max(.), minimum = min(.), st_dv = sd(.), fq = quantile(., 0.25), tq = quantile(., 0.75))) 
+
+gd <- gd %>% 
+  mutate(scenario = str_replace(scenario, "acr", "athlete_cheats_rival"), 
+         scenario = str_replace(scenario, "adr", "athlete_deceives_referee"), 
+         scenario = str_replace(scenario, "ayc", "athlete_yells_at_coach"), 
+         scenario = str_replace(scenario, "ccr", "coach_cheers_rival"), 
+         scenario = str_replace(scenario, "ddf", "daughter_disobeys_father"),
+         scenario = str_replace(scenario, "ecc", "employee_conspires_with_comp."),
+         scenario = str_replace(scenario, "elb", "employee_lies_to_boss"), 
+         scenario = str_replace(scenario, "git", "girl_interrupts_teacher"),
+         scenario = str_replace(scenario, "idb", "intern_disobeys_boss"), 
+         scenario = str_replace(scenario, "jbd", "judge_befriends_defendant"), 
+         scenario = str_replace(scenario, "mbr", "man_betrays_relative"), 
+         scenario = str_replace(scenario, "mbw", "man_betrays_wife"), 
+         scenario = str_replace(scenario, "mmc", "man_marries_cousin"),
+         scenario = str_replace(scenario, "mmls", "man_makes_love_sister"), 
+         scenario = str_replace(scenario, "mpsa", "married_has_sex_adulterer"), 
+         scenario = str_replace(scenario, "msas", "mother_sexually_arouses_son"), 
+         scenario = str_replace(scenario, "msn", "mayor_slanders_neighbor"), 
+         scenario = str_replace(scenario, "pch", "person_hurts_child"), 
+         scenario = str_replace(scenario, "php", "person_hires_prostitute"), 
+         scenario = str_replace(scenario, "pkp", "person_kills_person"),
+         scenario = str_replace(scenario, "scc", "student_cheats_classmate"), 
+         scenario = str_replace(scenario, "sip", "student_insults_professor"), 
+         scenario = str_replace(scenario, "thls", "teacher_hits_lazy_student"), 
+         scenario = str_replace(scenario, "whh", "wife_hits_husband"), 
+         scenario = str_replace(scenario, "tmdp", "teenager_mocks_disabled"))
+
 ```
 
 ## Research Question 
@@ -40,11 +261,205 @@ In ACT, then, we have a powerful framework that can help us analyze more dimensi
 
 ## Preliminary Results 
 
-The data presented here were collected using Prolific. We provided participants (n = 205) with a list of 25 moral vignettes and asked them about the extent to which they considered each scenario harmful, immoral, and unexpected. After filtering for missed attention checks, we have a total of 194 usable responses (99 liberals and 95 conservatives). 
+### Descriptive Analysis 
+
+The data presented here were collected using Prolific. We provided participants (n = 205) with a list of 25 moral vignettes and asked them about the extent to which they considered each scenario harmful, immoral, and unexpected. After filtering for missed attention checks, we have a total of 194 usable responses (99 liberals and 95 conservatives). The following plots show the distribution of the participants' ratings of each sceario on all three dimensions: 
+
+```{r}
+# Keep only harm questions 
+gdh <- gd[str_which(gd$scenario, "_h$"),]
+# Plot harm questions 
+gdh %>% 
+  mutate(scenario = str_remove(scenario, "_h$")) %>% 
+  ggplot(aes(x = reorder(scenario, avg), y = avg)) + 
+  geom_point(col = "darkred", fill = "darkred", pch = 2) + 
+  geom_point(aes(y = med), col = "darkgreen", fill = "darkgreen") +
+  geom_errorbar(aes(ymin = fq, ymax = tq), alpha = .45) +
+  coord_flip() + 
+  labs(x = "", 
+       y = "Ratings", 
+       title = "Perceptions of Harmfulness", 
+       caption = "Circles = Median \nTriangles = Mean")
+
+# Now lets look at immorality 
+
+gdi <- gd[str_which(gd$scenario, "_i$"),]
+
+# Plot immorality
+
+gdi %>% 
+  mutate(scenario = str_remove(scenario, "_i$")) %>% 
+  ggplot(aes(x = reorder(scenario, avg), y = avg)) + 
+  geom_point(col = "darkred", fill = "darkred", pch = 2) + 
+  geom_point(aes(y = med), col = "darkgreen", fill = "darkgreen") +
+  geom_errorbar(aes(ymin = fq, ymax = tq), alpha = .45) +
+  coord_flip() + 
+  labs(x = "", 
+       y = "Ratings", 
+       title = "Perceptions of Immorality", 
+       caption = "Circles = Median \nTriangles = Mean")
+
+# Lastly let's look at unexpectedness 
+
+gdu <- gd[str_which(gd$scenario, "_u$"),]
+
+# Plot Unexpectedness
+
+gdu %>% 
+  mutate(scenario = str_remove(scenario, "_u$")) %>% 
+  ggplot(aes(x = reorder(scenario, avg), y = avg)) + 
+  geom_point(col = "darkred", fill = "darkred", pch = 2) + 
+  geom_point(aes(y = med), col = "darkgreen", fill = "darkgreen") +
+  geom_errorbar(aes(ymin = fq, ymax = tq), alpha = .45) +
+  coord_flip() + 
+  labs(x = "", 
+       y = "Ratings", 
+       title = "Perceptions of Unexpectedness", 
+       caption = "Circles = Median \nTriangles = Mean") 
+```
+
+To an extent, the data exhibit predictable patterns. A person killing a person is consistently considered the most immoral and the most harmful scenario. A mother sexually arousing her son is, in turn, considered to be the most unexpected event. Nonetheless, there are interesting patterns of agreement and disagreement. The middle 50% of the sample stated that killing and mother/son incest are extremely immoral. The IQR is equally narrow for the perceptions of the harmfulness of killing. This tells us that the respondents interpreted the scenarios consistently. Interestingly, there is considerable disgreement about the harmfulness of a man marrying his cousin, a man making love to his sister, and a person procuring the services of a prostitute. This is an interesting insight: it suggests that the debates around the wrongness of certain transgressions might indeed be be related to the fact that we differ in the extent to which we consider these acts harmful.
+
+The data also allow us to recreate the plot from Gray and Keeney (2015), where they visualize the average severity of events and their weirdness. Furthermore, we can explore the relationship between harmfulness and unexpectedness. Below, I present these plots side by side: 
+
+```{r}
+
+# create mean measures from the long dataset
+
+dsl <- d_long %>% 
+  group_by(scenario, type, def, dop) %>% 
+  summarise(mean_harm = mean(harm), 
+            mean_imm = mean(immoral), 
+            mean_unex = mean(unexpected)) 
 
 
+# Recreate Gray and Keeney's plot
 
+ dsl %>% 
+  ggplot(aes(x = mean_imm, y = mean_unex, col = type)) + 
+  geom_point() + 
+  geom_text_repel(aes(label = scenario), show.legend = F) + 
+  theme(legend.position = "bottom") + 
+  guides(text = F) + 
+  labs(x = "Immorality", 
+       y = "Unexpectedness", 
+       title = "Average Unexpectedness by Average Immorality")
 
+# Harm by unexpectedness plot 
+
+ dsl %>% 
+  ggplot(aes(x = mean_harm, y = mean_unex, col = type)) + 
+  geom_point() + 
+  geom_text_repel(aes(label = scenario), show.legend = F) + 
+  theme(legend.position = "bottom") +
+  guides(text = F) + 
+  labs(x = "Harmfulness", 
+       y = "Unexpectedness", 
+       title = "Average Unexpectedness by Average Harmfulness")
+
+```
+Some insights from Gray and Keeney (2015) still hold here. Certain purity trangressions are the most unexpected, but harmful wrongs are still the most severe. However, the plot suggests that the relationship between unexpectedness and severity is perhaps more linear than these authors have been willing to concede. They do argue that "weirdness" is related to morality insofar as it denotes norm violation. However, given the limited amount of scenarios they analyze, they do not have enough data to make this case convincingly. This relationship, nonetheless, is evident in our data.
+
+Unsurprisingly, the most unexpected scenarios are those involving purity trangressions and the most harmful are those involving harm. Consistent with Gray and Schein's (2018) ideas, unexpectedness is strongly related to perceptions of harmfulness. This lends credence to the idea that the "weirdness" of moral trangressions is related to norm violations, which themselves are understood through the language of harm. 
+
+### Statistical Analysis
+
+Now, we are going to fit some multi-levels models with immorality ratings as the dependent variable. We will predict immorality using: 
+
+1) Perceptions of harmfulness, perceptions of unexpectedness, and deflection.
+2) The affective meanings (EPA values) of the actor, behavior, and object.
+3) The changes in affective meanings of the identities - as calculating using the ACT equations - after the interaction. 
+
+These analyses will help us understand how the semantic structures of the scenarios shape their perceived severity. All models will include random intercepts for each participant and for each scenario. This allows us to account for the rating patterns of respondents or for idiosyncratic scenarios. The first model will predict immorality on unexpectedness, harmfulness, and deflection. 
+
+```{r}
+# Scale all variables before the analysis
+d_long_scaled <- 
+  d_long %>% 
+  mutate_at(c("id", "type", "scenario", "conservative", "neg_beh"), ~as.factor(.)) %>% 
+  mutate_if(is.numeric, scale)
+# Fit initial model
+m1 <- lme(fixed = immoral ~ harm + def + unexpected,
+           data = d_long_scaled,
+           random =  ~  1  | scenario/id)
+
+summary(m1)
+```
+
+In this model, harm significantly predicts immorality and so does unexpectedness. Deflection, however, is a rather poor predictor of wrongdoing. One thing to take into account here is that there is not a lot of variation in deflection - we only have 25 data points - and, therefore, establishing relationships can be difficult. However, the sign and the magnitudes of the coefficients do not speak favorably of deflection's capacity to predict immorality. This is not necessarily a surprise: this study was, in part, motivated by the discrepancy between deflection and the severity of certain scenarios. Moreover, deflection is not meant to capture immorality but rather unexpectenedness. Perhaps a more direct test of deflection's explanatory power in the moral domain would be to test its capacity to account for unexpectedness.
+
+```{r}
+
+# Unexpectedness exaplained by harm, immorality, and deflection
+
+m2 <- lme( fixed = unexpected ~ 1 + def + harm + immoral,
+           data = d_long_scaled,
+           random =  ~  1 | scenario/id)
+
+summary(m2)
+
+```
+
+This model suggests that, in our data, deflection is not very informative for predicting unexpectedness, unlike harm and immorality. The coefficient for deflection, here, is on the verge of significance but its sign is the opposite of what one would expect. The model suggests that as deflection goes up, unexpectedness goes down. Undoubtedly, this result is being influenced by the low deflection / high unexpectedness events such as incest. What this analysis shows, then, is that in relation to moral trangressions, deflection is not a very good predictor of unexpectedness, mainly because it does not capture the violation of moral norms.
+
+It is possible to look beyond deflection, and to have a deeper look at whether the EPA profiles themselves tell us something about the immorality of acts. Similarly, we can examine whether transformations in these values - the individual components of deflection - are more informative than the aggregate score. These values should not all be used as predictors in the same model due to multicollinearity - EPA profiles and subsequent tranformations carry much of the same information. I will then fit two models: one for the EPA profiles of actors, behaviors, and objects; the second, for the difference between those values and the transient impressions. In both models, immorality is the dependent variable. 
+
+```{r}
+
+# Immorality predicted by the individual EPA profiles 
+m5 <- lme(fixed = immoral ~ 1 + ae + ap + aa + be + bp + ba + oe + op + oa,
+           data = d_long_scaled,
+           random =  ~  1 | scenario/id)
+
+summary(m5)
+# Immorality predicted by the transformations in EPA profiles 
+m6 <- lme(fixed = immoral ~ 1  + dae + dap + daa + dbe + dbp + dba + doe + dop + doa,
+           data = d_long_scaled,
+           random =  ~  1 | scenario/id)
+
+summary(m6)
+```
+
+Both models fit the data poorly (their BICs are quite high). Again, this suggests that, in  these data, EPA profiles are not very predictive of immorality. In the first model, the only value that comes close to the threshold of significance is the potency of the behavior. As behaviors become more potent, immorality appears to increase. However, we cannot draw strong conclusions from this. 
+
+The second model is similar in its poor fit and in the high p-values of its coefficients. One coefficient, nonetheless, reaches significance: the change in potency of the object. It might appear counterintuitive but it's an artifact of the scale. All chosen events except for one - a person hires a prostitute - lower the potency of the object. However, the events that seem to lower the potency of the object the least are amongst the most immoral - such as a person hurting a child or a teacher hitting a lazy student. In this dataset, then, the events that lower the potency of the object the least are associated with more perceived immorality. Given that the scales are centered, this is what the coefficient reflects.
+
+To will close this analysis, we will examine the predictive capacity of the EPA profiles when purity trangressions are excluded. As we have noted, ACT does a poor job at capturing the unexpectedness or wrongness of violations that involve the breaching of taboos. These violations are mostly those related to "purity" trangressions. If we exclude them, then, we could see whether the connotative meanings of the scenarios can help predict the immorality of the other trangressions. 
+
+```{r}
+
+# Run model with EPA scores on a sample excluding the purity scenarios 
+m8 <- lme( fixed = immoral ~ 1 + ae + ap + aa + be + bp + ba + oe + op + oa,
+           data = filter(d_long_scaled, type != "purity"),
+           random =  ~  1 | scenario/id)
+
+summary(m8)
+
+```
+
+The first thing to notice is that the BICs for this model is dramatically lower. We cannot compare it directly with the models fit above because the number of observations is not the same. However, it is worth bearing in mind that the EPA values seem to be a lot more informative when the purity scenarios are excluded. 
+
+The model shows interesting results. The coefficients for the behavior's evaluation and the object's potency are both significant. This resonates with  Gray and Schein's (2018) theory. As the evaluation of the behaviors go up, the immorality of a scenario sinificantly decreases. This is - reassuringly - what we would expect: behaviors that have low-evaluation are perceived as more immoral. The coefficient for the object's potency, in turn, suggests that as this value increases, the immorality of the act tends to decrease. This is an important finding because it speaks directly to the the theory's idea of vulnerability. As actors appear less potent, the behaviors directed at them are considered more immoral. This adds plausibility to the notion that the vulnerability of the victim is key when assessing immorality. 
+
+## Discussion 
+
+The models above note that there are three main semantic properties that might be important when analyazing the severity of moral scenarios: the evaluation of the behavior, the potency of the behavior, and the change in the potency of the object. Let's visualize the scenarios along these three axes: 
+
+```{r}
+
+p <- plot_ly(events_def, x = ~be, y = ~bp, z = ~dop, color = ~type, 
+             marker = list(symbol = 'circle'), 
+             text = ~paste('Scenario: ', scenario)) %>% 
+            layout(title = "Semantic Structures of Moral Wrongs", 
+                   scene = list(xaxis = list(title = 'Behavior Evaluation'),
+                                yaxis = list(title = 'Behavior Potency'),
+                                zaxis = list(title = 'Change in Object Potency')))
+p
+```
+
+This graph shows clear patterns. The most harmful scenarios usually involve negative and powerful behaviors directed at weak objects, who look much more vulnerable after being acted upon. The most “unexpected” scenarios, in turn, are all clumped into one corner. They tend to involve relatively good and potent behaviors, which do not make the patients look significantly weaker than they originally were. The semantic properties of these scenarios, then, begin to reveal some underlying differences and similarities. 
+
+The scenarios that were consistently rated as highly unexpected also share a common important feature: they are quite distant from the most "prototypical" scenario - i.e. a person kills a person. Their semantic structures differ sharply from the template of what a moral transgression should look like. This might explain why they are considered unexpected and why there is considerable disagreement about their harmfulness. It is not that they  are considered "harmless", but rather that the attribution of harm and immorality to these scenarios might be more cognitively difficult because, in connotative terms, these scenarios are further away from prototypical moral wrongs. What might make these scenarios distinctive is that their immorality does not lie within their connotative structures but rather on external social rules and denotative meanings. 
 
 
 
