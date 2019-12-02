@@ -372,7 +372,7 @@ dsl <- d_long %>%
 
 # Recreate Gray and Keeney's plot
 
-dsl %>% 
+ui_point <- dsl %>% 
   ggplot(aes(x = mean_imm, y = mean_unex, col = type)) + 
   geom_point() + 
   geom_text_repel(aes(label = scenario), show.legend = F) + 
@@ -381,6 +381,10 @@ dsl %>%
   labs(x = "Immorality", 
        y = "Unexpectedness", 
        title = "Average Unexpectedness by Average Immorality")
+
+ui_point
+
+ggsave("ui_point.png")
 ```
 
 Some insights from Gray and Keeney (2015) still hold in our data. Certain purity trangressions are the most unexpected, but harmful wrongs are still the most severe. However, the plot suggests that the relationship between unexpectedness and severity is perhaps more linear than these authors have been willing to concede. They do argue that "weirdness" is related to morality insofar as it denotes norm violation. However, given the limited amount of scenarios they analyze, they do not have enough data to make this case convincingly. This relationship, nonetheless, is evident in our data. 
@@ -391,7 +395,7 @@ Let's look at the relationship between harm and unexpectedness, and harm and imm
 
 # Plot harm by unexpectedness 
 
-dsl %>% 
+uh_point <- dsl %>% 
   ggplot(aes(x = mean_harm, y = mean_unex, col = type)) + 
   geom_point() + 
   geom_text_repel(aes(label = scenario), show.legend = F) + 
@@ -401,6 +405,9 @@ dsl %>%
        y = "Unexpectedness", 
        title = "Average Unexpectedness by Average Harmfulness")
 
+uh_point
+
+ggsave("uh_point.png")
 ```
 
 The relationship here is similar to the one above. Unsurprisingly, the most unexpected scenarios are those involving purity and the most harmful are those involving harm. However, affirming Kurt's ideas, there seems to be a relatively strong relationship between harmfulness and unexpectedness. 
@@ -408,7 +415,7 @@ The relationship here is similar to the one above. Unsurprisingly, the most unex
 ```{r}
 # Plot harmfulness by immorality
 
-dsl %>% 
+ih_point <- dsl %>% 
   ggplot(aes(x = mean_harm, y = mean_imm, col = type)) + 
   geom_point() + 
   geom_text_repel(aes(label = scenario), show.legend = F) + 
@@ -417,6 +424,10 @@ dsl %>%
   labs(y = "Immorality", 
        x = "Harmfulness", 
        title = "Average Immorality by Average Harmfulness")
+
+ih_point
+
+ggsave('ih_point.png')
 ```
 
 Consistent with our previous analysis, this relatioship is very strong, almost forming a 45 degree line. Perceptions of harmfulness are highly informative of respondents' conceptions of immorality. 
@@ -427,7 +438,7 @@ To close this visualization section, I am going to look at how deflection relate
 
 # Unexpectedness by deflection 
 
-dsl %>% 
+ud_point <- dsl %>% 
   ggplot(aes(x = def, y = mean_unex, col = type)) + 
   geom_point() +
   geom_text_repel(aes(label = scenario), show.legend = F) + 
@@ -436,6 +447,10 @@ dsl %>%
   labs(x = "Deflection", 
        y = "Unexpectedness", 
        title = "Average Unexpectedness by Deflection")
+
+ud_point
+
+ggsave('ud_point.png')
 
 
 # Immorality by deflection 
