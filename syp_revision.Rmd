@@ -269,7 +269,7 @@ The data presented here were collected using Prolific. We provided participants 
 # Keep only harm questions 
 gdh <- gd[str_which(gd$scenario, "_h$"),]
 # Plot harm questions 
-gdh %>% 
+h_plot <- gdh %>% 
   mutate(scenario = str_remove(scenario, "_h$")) %>% 
   ggplot(aes(x = reorder(scenario, avg), y = avg)) + 
   geom_point(col = "darkred", fill = "darkred", pch = 2) + 
@@ -281,13 +281,15 @@ gdh %>%
        title = "Perceptions of Harmfulness", 
        caption = "Circles = Median \nTriangles = Mean")
 
+ggsave("harm_summary.png")
+
 # Now lets look at immorality 
 
 gdi <- gd[str_which(gd$scenario, "_i$"),]
 
 # Plot immorality
 
-gdi %>% 
+i_plot <- gdi %>% 
   mutate(scenario = str_remove(scenario, "_i$")) %>% 
   ggplot(aes(x = reorder(scenario, avg), y = avg)) + 
   geom_point(col = "darkred", fill = "darkred", pch = 2) + 
@@ -299,13 +301,15 @@ gdi %>%
        title = "Perceptions of Immorality", 
        caption = "Circles = Median \nTriangles = Mean")
 
+ggsave("immorality_summary.png")
+
 # Lastly let's look at unexpectedness 
 
 gdu <- gd[str_which(gd$scenario, "_u$"),]
 
 # Plot Unexpectedness
 
-gdu %>% 
+u_plot <- gdu %>% 
   mutate(scenario = str_remove(scenario, "_u$")) %>% 
   ggplot(aes(x = reorder(scenario, avg), y = avg)) + 
   geom_point(col = "darkred", fill = "darkred", pch = 2) + 
@@ -316,6 +320,8 @@ gdu %>%
        y = "Ratings", 
        title = "Perceptions of Unexpectedness", 
        caption = "Circles = Median \nTriangles = Mean") 
+
+ggsave("unexpected_summary.png")
 ```
 
 To an extent, the data exhibit predictable patterns. A person killing a person is consistently considered the most immoral and the most harmful scenario. A mother sexually arousing her son is, in turn, considered to be the most unexpected event. Nonetheless, there are interesting patterns of agreement and disagreement. The middle 50% of the sample stated that killing and mother/son incest are extremely immoral. The IQR is equally narrow for the perceptions of the harmfulness of killing. This tells us that the respondents interpreted the scenarios consistently. Interestingly, there is considerable disgreement about the harmfulness of a man marrying his cousin, a man making love to his sister, and a person procuring the services of a prostitute. This is an interesting insight: it suggests that the debates around the wrongness of certain transgressions might indeed be be related to the fact that we differ in the extent to which we consider these acts harmful.
