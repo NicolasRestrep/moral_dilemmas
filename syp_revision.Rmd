@@ -4,6 +4,10 @@ subtitle: "Revised Statement"
 author: "Nicolas Restrepo"
 date: "11/30/2019"
 output: html_document
+header-includes:
+- \usepackage{setspace}
+- \doublespacing
+- \usepackage{natbib}
 ---
 
 ```{r setup, include=FALSE}
@@ -235,35 +239,37 @@ gd <- gd %>%
 
 Can the underlying semantic properties of moral scenarios help explain how transgressions are differentially interpreted and categorized? 
 
+## Introduction
+
+Individuals and groups must constantly classify and categorize moral transgressions; they produce legal and moral codes that group certain types of violations together and, more importantly, that sort these categories according to their perceived severity. There is widespread debate regarding the processes that underpin the categorization of moral wrongdoing. Currently, the most plausible account contends that we attribute moral wrongdoing through prototypical association. In other words, we compare violations to a mental template of what an immoral act must look like, and severity is ascribed to the extent that the act we perceived resembles that template. Here, I contend that by looking at the connotative meanings associated with different moral vignettes, we can get a clearer idea of what this prototypical moral transgression looks like. Furthermore, analyzing the semantic properties of moral vignettes can help us disentangle what makes certain scenarios prototypical, and how deviations from those prototypes can explain differences in how we classify moral transgressions. 
+
 ## Literature Review
 
 ### Ascription of Immorality
 
-Individuals and groups must constantly classify and categorize moral transgressions; they must decide what kind of violations go together and, especially, they must sort these categories according to their perceived severity. There is widespread debate amongs social scientists interested in morality regarding the processes that underpin the categorization of moral wrongdoing. Currently, the most plausible account contends that we attribute moral wrongdoing through prototypical association. In other words, we compare violations to a mental template of what an immoral act must look like, and severity is ascribed to the extent that the act we perceived resembles that template. Here, I contend that by looking at the connotative meanings associated with different moral vignettes, we can get a clearer idea of what this template looks like. Furthermore, analyzing the semantic properties of moral vignettes can help us disentangle what makes certain scenarios prototypical, and how deviations from those prototypes can explain differences in how we classify moral transgressions. 
+The debate about the attribution of immorality has currently two main contenders: those who argue that moral transgressions inherently belong to different categories and those who portend that they are ordered along the same continuum. The former are most famously represented by Haidt and Graham's Moral Foundations Theory. This line of work argues that human beings have cognitive modules that are sensitive to specific stimuli and which have given rise to a specific set of moral prohibitions (Haidt and Joseph, 2007). For example, we have a module for purity, which originally prompted us to stay clear of pathogens by eliciting a sense of disgust. This has developed into a set of moral taboos about, say, sex and bodily excretions. Authors like Gray and Schein (2018), in turn, contend that notions of morality are fundamentally mediated by perceptions of harm (Schein and Gray, 2018). Perceptions of harm, in turn, are dyadic: they involve the image of a cognizant agent acting upon a patient (Gray et al., 2012). This dyadic mental map provides a fuzzy prototype against which we judge actions in order to examine their moral status. Acts that appear to involve an agent causing harm to a subject are deemed to be immoral and social norms are established around them. However, social conventions that seem to have no immediately harmful consequences can also become moralized when analyzed through this same template. Disobeying dietary taboos, then, is said to cause harm, whether to one’s soul or to the ancestors’ spirits. Thus, they contend that a coherent logic - that of harm - underpins moral cognition. 
 
-The debate about the attribution of immorality has currently two main contenders: those who argue that moral trangressions inherently belong to different categories and those who portend that they are ordered along the same continuum. The former are most famously represented by Haidt and Graham's Moral Foundations Theory. This line of work argues that human beings have cognitive modules that are sensitive to specific stimuli and which have given rise to a specific set of moral prohibitions (Haidt and Joseph, 2007). For example, we have a module for purity, which originally prompted us to stay clear of pathogens by eliciting a sense of disgust. This has developed into a set of moral taboos about, say, sex and bodily excretions. Authors like Gray and Schein (2018), in turn, contend that notions of morality are fundamentally mediated by perceptions of harm (Schein and Gray, 2018). Perceptions of harm, in turn, are dyadic: they involve the image of a cognizant agent acting upon a patient (Gray et al., 2012). This dyadic mental map provides a fuzzy prototype against which we judge actions in order to examine their moral status. Acts that appear to involve an agent causing harm to a subject are deemed to be immoral and social norms are established around them. However, social conventions that seem to have no immediately harmful consequences can also become moralized when analyzed through this same template. Disobeying dietary taboos, then, is said to cause harm, whether to one’s soul or to the ancestors’ spirits. Thus, a coherent logic - that of harm - underpins moral cognition. 
+Currently, empirical evidence favors the idea that moral wrongdoing is attributed through prototypical thinking. Gray and Keeney (2015) argue convincingly that the presumably distinct moral modules - or foundations - are all highly correlated with one another. Different moral prohibitions, then, seem to be cut from the same cloth, and cannot be neatly parceled out into distinct groups (Gray and Keeney, 2015). The corollary implication, then, is that differences in how moral transgressions are interpreted arise due to deviations from a general prototype; the image of a cognizant agent deliberately causing harm to a vulnerable victim. This account relies heavily on Wittgenstein's idea that category membership is ascribed, not through a set of exclusionary criteria, but rather due to proximity to a prototype. Categories should not be conceived as clearly delineated groups. Instead, they should be understood as loose collections of elements that are - to different extents - proximate to a mental prototype. The classic example is about the category of birds. When we are asked to imagine a bird, we often think of an animal similar to a robin or a blue jay. This is because robins are closer to the prototype of birds than ostriches, even if both fit the scientific criteria for membership in that group. There is ample evidence from cognitive science that, at a cognitive level, categorization does indeed occur through prototypical association. Gray and Schein (2018) themselves have shown that individuals categorize actions as immoral more quickly when the acts involve harm. Thus, the most cognitively plausible account of the attribution of immorality suggests that we classify moral violations based on their similarities and differences with a fuzzy mental template.
 
-Currently, empirical evidence favors the idea that moral wrongdoing is attributed through prototypical thinking. Gray and Keeney (2015) argue convincingly that the presumably distinct moral modules - or foundations - are all highly correlated with one another. Different moral prohibitions, then, seem to be cut from the same cloth, and cannot be neatly parceled out into distinct groups (Gray and Keeney, 2015). The corollary implication, then, is that differences in how moral trangressions are interpreted arise due to deviations from a general prototype; the image of a cognizant agent deliberately causing harm to a vulnerable victim. This account relies heavily on Wittgenstein's idea that category membership is ascribed, not through a set of exlusionary criteria, but rather due to proximity to a prototype. Categories should not be conceived as clearly delineated groups. Instead, they should be understood as loose collections of elements that are - to different extents - proximate to a mental prototype. The classic example is that robins are closer to the prototype of birds than ostriches, even if both fit the scientific criteria for membership in that group. There is ample evidence from cognitive science that, at a cognitive level, categorization does indeed occur through prototypical association. Gray and Schein (2018) themselves have shown that individuals categorize actions as immoral more quickly when the acts involve harm. Thus, the most cognitively plausible account of the attribution of immorality suggests that we classify moral violations based on their similarities and differences with a fuzzy mental template.
-
-Though convincing, Gray and Schein's (2018) account still leaves crucial questions unanswered. Although they argue convincingly for the importance of a prototypical moral dyad, they do not delve deeper into the characteristics of this template. The content of the template, for instance, remains opaque. It remains unclear what makes an action immediately harmful or a victim obviously vulnerable. If harmfulness and vulnerability themselves depend on immorality, then the theory would quickly fall into circularity. Furthermore, we do not know whether the prototypical dyad varies between cultures and across time. Recent research untertaken by sociologists suggests that prototypical cognition is an eminently social process; our readiness to say who counts as African-American or as poor changes depending on the social positions in which we are embedded. The argument here is that we can begin answering some of this questions by making use of well-established sociological techniques. 
+Though convincing, Gray and Schein's (2018) account still leaves crucial questions unanswered. Although they argue convincingly for the importance of a prototypical moral dyad, they do not delve deeper into the characteristics of this template. The content of the template, for instance, remains opaque. It remains unclear what makes an action immediately harmful or a victim obviously vulnerable. If harmfulness and vulnerability themselves depend on immorality, then the theory would quickly fall into circularity. Furthermore, we do not know whether the prototypical dyad varies between cultures and across time. Recent research conducted by sociologists suggests that prototypical cognition is an eminently social process; our readiness to say who counts as African American (Monk, 2014) or as poor (Valentino and Hunzaker, 2019) changes depending on the social positions in which we are embedded. The argument here is that we can begin answering some of these questions by making use of well-established sociological techniques. 
 
 ### Underlying Semantic Structures 
 
-Research about moral cognition has often used fictional scenarios to examine how respondents assess immorality. The abovementioned debate relies mostly on evidence that stems from using this type of vignettes. These fictional scenarios tend to share a grammatical structure (actor-behavior-object) which is, incidentally, the main unit of analysis of Affect Control Theory (ACT). This means that we take advantage of the dictionaries of affective meanings collected by ACT scholars to translate moral scenarios to a format that allows us to examine their underlying connotative meanings. 
+Research about moral cognition has often used fictional scenarios to examine how respondents assess immorality. The abovementioned debate relies mostly on evidence that stems from using this type of vignettes. These fictional scenarios tend to share a grammatical structure (actor-behavior-object) which is, incidentally, the main unit of analysis of Affect Control Theory (ACT). This means that we can take advantage of the dictionaries of affective meanings collected by ACT scholars to translate moral scenarios into a format that allows us to examine their underlying connotative meanings. 
 
 ACT starts from the premise that individuals attach affective meanings to social concepts and that those semantic structures can be reduced to a set of measurable dimensions. Building on Osgood et al.’s (1957) work, it contends that there are three basic dimensions of meaning: evaluation, potency, and activity. Evaluation pertains to characteristics such as goodness and badness. Potency, in turn, captures notions of power and weakness, while Activity relates to issues of liveliness and quietness. Osgood et al.’s (1975) extensive research demonstrates the cross-cultural validity of these dimensions of affective meaning. 
 
 Using these dimensions, it is possible to measure the affective meanings cultures attach to social concepts. The measuring technique used is called semantic differentials: respondents are asked to rate a series of concepts on a scale ranging from, for example, very weak to very strong. The averages of all three dimensions then are computed (Heise, 1979) and each concept is assigned an EPA profile, known as the fundamental sentiment. ACT researchers have leveraged this technique to collect large dictionaries of affective meaning in different cultures, ranging from Japan to Canada (Mackinnon and Robinson, 2014). They capture meaning remarkably well: babies, for instance, are described as very good, very weak, and somewhat lively, while murderers are depicted as very bad, very powerful, and slightly active. Though not all babies – or murderers – are the same, these profiles closely mirror the sentiments that we attach to these identities. By locating social concepts in a three-dimensional semantic space, we can shed light on the symbolic structures through which cultures organize the social world.
 
-ACT also offers a formal framework for understading how social interactions unfold. As mentioned above, the theory furthers that we understand such events through a simple grammatical form: we see an Actor directing a Behavior towards an Object. We define such situations by labelling the interactants and the behavior – i.e. by attaching appropriate connotative meanings to them. As a result, we engender a set of expectations about how the interaction might occur. Events can change our perceptions of the agents and objects involved, and ACT provides detailed mathematical equations that help calculate how those perceptions are likely to change. The theory, then, does not only offer a way of measuring affective meanings but also a mathematical framework for examining how these meanings change through the course of interaction. 
+ACT also offers a formal framework for understanding how social interactions unfold. As mentioned above, the theory furthers that we understand such events through a simple grammatical form: we see an Actor directing a Behavior towards an Object. We define such situations by labelling the interactants and the behavior – i.e. by attaching appropriate connotative meanings to them. As a result, we engender a set of expectations about how the interaction might occur. Events can change our perceptions of the agents and objects involved, and ACT provides detailed mathematical equations that help calculate how those perceptions are likely to change. The theory, then, does not only offer a way of measuring affective meanings but also a mathematical framework for examining how these meanings change through the course of interaction. 
 
-In ACT, then, we have a powerful framework that can help us analyze more dimensions of moral vignettes. For instance, we can enquire into the affective meanings of prototypically harmful acts such as "murder" or characteristically vulnerable patients such as "children". Additionally, we can explore whether immorality is associated with predictable changes in the meanings we associate with the agents and objects involved in the transgression. Perhaps more importantly, we can explore the underlying similarities in the semantic structures of moral scenarios to shed light on the features that make certain transgressions more or less prototypical. This is precisely what we seek to do in the following analysis. 
+In ACT, then, we have a powerful framework that can help us analyze deeper dimensions of the vignettes that have been recurrently used to analyze moral decision-making. For instance, we can analyze the affective meanings of prototypically harmful acts such as "murder" or characteristically vulnerable patients such as "children". Additionally, we can explore whether immorality is associated with predictable changes in the meanings we associate with the agents and objects involved in the transgression. Perhaps more importantly, we can explore the underlying similarities in the semantic structures of moral scenarios to shed light on the features that make certain transgressions more or less prototypical. This is precisely what we seek to do in the following analysis. 
 
 ## Preliminary Results 
 
 ### Descriptive Analysis 
 
-The data presented here were collected using Prolific. We provided participants (n = 205) with a list of 25 moral vignettes and asked them about the extent to which they considered each scenario harmful, immoral, and unexpected. After filtering for missed attention checks, we have a total of 194 usable responses (99 liberals and 95 conservatives). The following plots show the distribution of the participants' ratings of each sceario on all three dimensions: 
+The data presented here were collected using Prolific. I provided participants (n = 205) with a list of 25 moral vignettes and asked them about the extent to which they considered each scenario harmful, immoral, and unexpected. After filtering for missed attention checks, there is a total of 194 usable responses (99 liberals and 95 conservatives). The following plots show the distribution of the participants' ratings for each scenario on all three dimensions:
 
 ```{r}
 # Keep only harm questions 
@@ -282,6 +288,8 @@ h_plot <- gdh %>%
        caption = "Circles = Median \nTriangles = Mean")
 
 ggsave("harm_summary.png")
+
+h_plot
 
 # Now lets look at immorality 
 
@@ -303,6 +311,8 @@ i_plot <- gdi %>%
 
 ggsave("immorality_summary.png")
 
+i_plot
+
 # Lastly let's look at unexpectedness 
 
 gdu <- gd[str_which(gd$scenario, "_u$"),]
@@ -322,11 +332,13 @@ u_plot <- gdu %>%
        caption = "Circles = Median \nTriangles = Mean") 
 
 ggsave("unexpected_summary.png")
+
+u_plot
 ```
 
 To an extent, the data exhibit predictable patterns. A person killing a person is consistently considered the most immoral and the most harmful scenario. A mother sexually arousing her son is, in turn, considered to be the most unexpected event. Nonetheless, there are interesting patterns of agreement and disagreement. The middle 50% of the sample stated that killing and mother/son incest are extremely immoral. The IQR is equally narrow for the perceptions of the harmfulness of killing. This tells us that the respondents interpreted the scenarios consistently. Interestingly, there is considerable disgreement about the harmfulness of a man marrying his cousin, a man making love to his sister, and a person procuring the services of a prostitute. This is an interesting insight: it suggests that the debates around the wrongness of certain transgressions might indeed be be related to the fact that we differ in the extent to which we consider these acts harmful.
 
-The data also allow us to recreate the plot from Gray and Keeney (2015), where they visualize the average severity of events and their weirdness. Furthermore, we can explore the relationship between harmfulness and unexpectedness. Below, I present these plots side by side: 
+The data also allow me to recreate the plot from Gray and Keeney (2015), where they visualize the average severity of events and their weirdness. Furthermore, I can explore the relationship between harmfulness and unexpectedness. Below, I present these plots: 
 
 ```{r}
 
@@ -364,19 +376,19 @@ dsl <- d_long %>%
        title = "Average Unexpectedness by Average Harmfulness")
 
 ```
-Some insights from Gray and Keeney (2015) still hold here. Certain purity trangressions are the most unexpected, but harmful wrongs are still the most severe. However, the plot suggests that the relationship between unexpectedness and severity is perhaps more linear than these authors have been willing to concede. They do argue that "weirdness" is related to morality insofar as it denotes norm violation. However, given the limited amount of scenarios they analyze, they do not have enough data to make this case convincingly. This relationship, nonetheless, is evident in our data.
+Some insights from Gray and Keeney (2015) still hold here. Certain purity trangressions are the most unexpected, but harmful wrongs are still the most severe. However, the plot suggests that the relationship between unexpectedness and severity is perhaps more linear than these authors have been willing to concede. They contend argue that "weirdness" is related to immorality insofar as it denotes norm violation. However, given the limited amount of scenarios they analyze, they do not have enough data to make this case convincingly. This relationship, nonetheless, is evident in this data.
 
 Unsurprisingly, the most unexpected scenarios are those involving purity trangressions and the most harmful are those involving harm. Consistent with Gray and Schein's (2018) ideas, unexpectedness is strongly related to perceptions of harmfulness. This lends credence to the idea that the "weirdness" of moral trangressions is related to norm violations, which themselves are understood through the language of harm. 
 
 ### Statistical Analysis
 
-Now, we are going to fit some multi-levels models with immorality ratings as the dependent variable. We will predict immorality using: 
+At this point, I am going to fit a number of multi-levels models with immorality ratings as the dependent variable. I will be predicting immorality using: 
 
 1) Perceptions of harmfulness, perceptions of unexpectedness, and deflection.
 2) The affective meanings (EPA values) of the actor, behavior, and object.
-3) The changes in affective meanings of the identities - as calculating using the ACT equations - after the interaction. 
+3) The changes in affective meanings of the identities - calculated using the ACT equations - after the interaction. 
 
-These analyses will help us understand how the semantic structures of the scenarios shape their perceived severity. All models will include random intercepts for each participant and for each scenario. This allows us to account for the rating patterns of respondents or for idiosyncratic scenarios. The first model will predict immorality on unexpectedness, harmfulness, and deflection. 
+These analyses will help us understand how the semantic structures of the scenarios shape their perceived severity. All models will include random intercepts for each participant and for each scenario. This allows me to account for the rating patterns of respondents or for idiosyncratic scenarios. The first model will predict immorality on unexpectedness, harmfulness, and deflection. 
 
 ```{r}
 # Scale all variables before the analysis
@@ -385,65 +397,60 @@ d_long_scaled <-
   mutate_at(c("id", "type", "scenario", "conservative", "neg_beh"), ~as.factor(.)) %>% 
   mutate_if(is.numeric, scale)
 # Fit initial model
-m1 <- lme(fixed = immoral ~ harm + def + unexpected,
-           data = d_long_scaled,
-           random =  ~  1  | scenario/id)
+m1 <- lmer(immoral ~ harm + def + unexpected + (1 | id) + (1 | scenario),
+          data = d_long_scaled)
 
-summary(m1)
+tidy(m1)
 ```
 
-In this model, harm significantly predicts immorality and so does unexpectedness. Deflection, however, is a rather poor predictor of wrongdoing. One thing to take into account here is that there is not a lot of variation in deflection - we only have 25 data points - and, therefore, establishing relationships can be difficult. However, the sign and the magnitudes of the coefficients do not speak favorably of deflection's capacity to predict immorality. This is not necessarily a surprise: this study was, in part, motivated by the discrepancy between deflection and the severity of certain scenarios. Moreover, deflection is not meant to capture immorality but rather unexpectenedness. Perhaps a more direct test of deflection's explanatory power in the moral domain would be to test its capacity to account for unexpectedness.
+In this model, harm significantly predicts immorality and so does unexpectedness. Deflection, however, is a poor predictor of wrongdoing. One thing to take into account here is that there is not a lot of variation in deflection - I only have 25 data points - and, therefore, establishing relationships can be difficult. However, the sign and the magnitudes of the coefficients do not speak favorably of deflection's capacity to predict immorality. This is not necessarily a surprise: this study was, in part, motivated by the discrepancy between deflection and the severity of certain scenarios. Moreover, deflection is not meant to capture immorality but rather unexpectenedness. Perhaps a more direct test of deflection's explanatory power in the moral domain would be to test its capacity to account for unexpectedness.
 
 ```{r}
 
 # Unexpectedness exaplained by harm, immorality, and deflection
 
-m2 <- lme( fixed = unexpected ~ 1 + def + harm + immoral,
-           data = d_long_scaled,
-           random =  ~  1 | scenario/id)
+m2 <- lmer(unexpected ~ 1 + def + harm + immoral + (1 | id) + (1 | scenario),
+           data = d_long_scaled)
 
-summary(m2)
+tidy(m2)
 
 ```
 
-This model suggests that, in our data, deflection is not very informative for predicting unexpectedness, unlike harm and immorality. The coefficient for deflection, here, is on the verge of significance but its sign is the opposite of what one would expect. The model suggests that as deflection goes up, unexpectedness goes down. Undoubtedly, this result is being influenced by the low deflection / high unexpectedness events such as incest. What this analysis shows, then, is that in relation to moral trangressions, deflection is not a very good predictor of unexpectedness, mainly because it does not capture the violation of moral norms.
+This model suggests that, in the data, deflection is not very informative for predicting unexpectedness, unlike harm and immorality. The coefficient for deflection, here, is on the verge of significance but its sign is the opposite of what one would expect. The model suggests that as deflection goes up, unexpectedness goes down. Undoubtedly, this result is being influenced by the low deflection / high unexpectedness events such as incest. What this analysis shows, then, is that in relation to moral trangressions, deflection is not a very good predictor of unexpectedness, mainly because it does not capture the violation of moral norms.
 
-It is possible to look beyond deflection, and to have a deeper look at whether the EPA profiles themselves tell us something about the immorality of acts. Similarly, we can examine whether transformations in these values - the individual components of deflection - are more informative than the aggregate score. These values should not all be used as predictors in the same model due to multicollinearity - EPA profiles and subsequent tranformations carry much of the same information. I will then fit two models: one for the EPA profiles of actors, behaviors, and objects; the second, for the difference between those values and the transient impressions. In both models, immorality is the dependent variable. 
+It is possible to go beyond deflection, and to have a deeper look at whether the EPA profiles themselves reveal something about the immorality of acts. Similarly, it is possible to examine whether transformations in these values - the individual components of deflection - are more informative than the aggregate score. These values should not all be used as predictors in the same model due to multicollinearity - EPA profiles and subsequent tranformations carry much of the same information. I will then fit two models: one for the EPA profiles of actors, behaviors, and objects; the second, for the difference between those values and the transient impressions. In both models, immorality is the dependent variable. 
 
 ```{r}
 
 # Immorality predicted by the individual EPA profiles 
-m5 <- lme(fixed = immoral ~ 1 + ae + ap + aa + be + bp + ba + oe + op + oa,
-           data = d_long_scaled,
-           random =  ~  1 | scenario/id)
+m5 <- lmer(immoral ~ 1 + ae + ap + aa + be + bp + ba + oe + op + oa + (1 | id) + (1 | scenario),
+           data = d_long_scaled)
 
-summary(m5)
+tidy(m5)
 # Immorality predicted by the transformations in EPA profiles 
-m6 <- lme(fixed = immoral ~ 1  + dae + dap + daa + dbe + dbp + dba + doe + dop + doa,
-           data = d_long_scaled,
-           random =  ~  1 | scenario/id)
+m6 <- lmer(immoral ~ 1  + dae + dap + daa + dbe + dbp + dba + doe + dop + doa + (1 |id) + (1 | scenario),
+           data = d_long_scaled)
 
-summary(m6)
+tidy(m6)
 ```
 
-Both models fit the data poorly (their BICs are quite high). Again, this suggests that, in  these data, EPA profiles are not very predictive of immorality. In the first model, the only value that comes close to the threshold of significance is the potency of the behavior. As behaviors become more potent, immorality appears to increase. However, we cannot draw strong conclusions from this. 
+Both models fit the data poorly (their BICs are quite high). Again, this suggests that, in  these data, EPA profiles are not very predictive of immorality. In the first model, the only value that comes close to the threshold of significance is the potency of the behavior. As behaviors become more potent, immorality appears to increase. However, I cannot draw strong conclusions from this. 
 
-The second model is similar in its poor fit and in the high p-values of its coefficients. One coefficient, nonetheless, reaches significance: the change in potency of the object. It might appear counterintuitive but it's an artifact of the scale. All chosen events except for one - a person hires a prostitute - lower the potency of the object. However, the events that seem to lower the potency of the object the least are amongst the most immoral - such as a person hurting a child or a teacher hitting a lazy student. In this dataset, then, the events that lower the potency of the object the least are associated with more perceived immorality. Given that the scales are centered, this is what the coefficient reflects.
+The second model is similar in its poor fit. One coefficient, nonetheless, reaches significance: the change in potency of the object. It might appear counterintuitive but it's an artifact of the scale. All chosen events except for one - a person hires a prostitute - lower the potency of the object. However, the events that seem to lower the potency of the object the least are amongst the most immoral - such as a person hurting a child or a teacher hitting a lazy student. In this dataset, then, the events that lower the potency of the object the least are associated with more perceived immorality. Given that the scales are centered, this is what the coefficient reflects.
 
-To will close this analysis, we will examine the predictive capacity of the EPA profiles when purity trangressions are excluded. As we have noted, ACT does a poor job at capturing the unexpectedness or wrongness of violations that involve the breaching of taboos. These violations are mostly those related to "purity" trangressions. If we exclude them, then, we could see whether the connotative meanings of the scenarios can help predict the immorality of the other trangressions. 
+To close this analysis, I will examine the predictive capacity of the EPA profiles when purity trangressions are excluded. As we have noted, ACT does a poor job at capturing the unexpectedness or wrongness of violations that involve the breaching of taboos. These violations are mostly those related to "purity" trangressions. If we exclude them, then, we could see whether the connotative meanings of the scenarios can help predict the immorality of the other trangressions. 
 
 ```{r}
 
 # Run model with EPA scores on a sample excluding the purity scenarios 
-m8 <- lme( fixed = immoral ~ 1 + ae + ap + aa + be + bp + ba + oe + op + oa,
-           data = filter(d_long_scaled, type != "purity"),
-           random =  ~  1 | scenario/id)
+m8 <- lmer(immoral ~ 1 + ae + ap + aa + be + bp + ba + oe + op + oa + (1 | id) + (1 | scenario),
+           data = filter(d_long_scaled, type != "purity"))
 
-summary(m8)
+tidy(m8)
 
 ```
 
-The first thing to notice is that the BICs for this model is dramatically lower. We cannot compare it directly with the models fit above because the number of observations is not the same. However, it is worth bearing in mind that the EPA values seem to be a lot more informative when the purity scenarios are excluded. 
+The first thing to notice is that the BICs for this model is dramatically lower. I cannot compare it directly with the models fit above because the number of observations is not the same. However, it is worth bearing in mind that the EPA values seem to be a lot more informative when the purity scenarios are excluded. 
 
 The model shows interesting results. The coefficients for the behavior's evaluation and the object's potency are both significant. This resonates with  Gray and Schein's (2018) theory. As the evaluation of the behaviors go up, the immorality of a scenario sinificantly decreases. This is - reassuringly - what we would expect: behaviors that have low-evaluation are perceived as more immoral. The coefficient for the object's potency, in turn, suggests that as this value increases, the immorality of the act tends to decrease. This is an important finding because it speaks directly to the the theory's idea of vulnerability. As actors appear less potent, the behaviors directed at them are considered more immoral. This adds plausibility to the notion that the vulnerability of the victim is key when assessing immorality. 
 
@@ -463,9 +470,21 @@ p <- plot_ly(events_def, x = ~be, y = ~bp, z = ~dop, color = ~type,
 p
 ```
 
-This graph shows clear patterns. The most harmful scenarios usually involve negative and powerful behaviors directed at weak objects, who look much more vulnerable after being acted upon. The most “unexpected” scenarios, in turn, are all clumped into one corner. They tend to involve relatively good and potent behaviors, which do not make the patients look significantly weaker than they originally were. The semantic properties of these scenarios, then, begin to reveal some underlying differences and similarities. 
+This graph shows clear patterns. The most harmful scenarios usually involve negative and powerful behaviors directed at weak objects, who look much more vulnerable after being acted upon. The most “unexpected” scenarios, in turn, are all clumped into one corner. They tend to involve relatively good and potent behaviors, which do not make the patients look significantly weaker than they originally were. The semantic properties of these scenarios, then, begin to reveal some structural patterns. 
 
-The scenarios that were consistently rated as highly unexpected also share a common important feature: they are quite distant from the most "prototypical" scenario - i.e. a person kills a person. Their semantic structures differ sharply from the template of what a moral transgression should look like. This might explain why they are considered unexpected and why there is considerable disagreement about their harmfulness. It is not that they  are considered "harmless", but rather that the attribution of harm and immorality to these scenarios might be more cognitively difficult because, in connotative terms, these scenarios are further away from prototypical moral wrongs. What might make these scenarios distinctive is that their immorality does not lie within their connotative structures but rather on external social rules and denotative meanings. 
+The scenarios that were consistently rated as highly unexpected share a common important feature: they are quite distant from the most "prototypical" scenario - i.e. a person kills a person. Their semantic structures differ sharply from the template of what a moral transgression should look like. This might explain why they are considered unexpected and why there is considerable disagreement about their harmfulness. It is not that they are viewed as "harmless". However, the attribution of harm and immorality to these scenarios might be more cognitively difficult because, in connotative terms, these scenarios are further away from prototypical moral wrongs. What might make these scenarios distinctive is that their immorality does not lie within their connotative structures but rather on external social rules and denotative meanings. 
+
+Let’s take two concrete examples:
+
+-	A person kills a person
+
+-	A man marries his cousin
+
+In terms of their affective meanings, the fundamental difference between both statements is the evaluation and potency of the behavior. The former is - affectively - a generally positive behavior. Thus, the “wrongness” of the first one lies within the semantic structure of the sentence, while the “wrongness” of the latter lies outside the predicate itself, in our social norms about incest. Try replacing the subjects in the first sentence and you will almost invariably end up with an immoral situation; a person murdering their brother might seem more shocking but no less immoral. The same exercise does not work for the second event: both identities have to be very specific for the event to be immoral. The “wrongness” of the vignette is not immediately apparent in its semantic structure and, thus, we have to do more work to figure out exactly why it is harmful and - as a consequence - why it is immoral. 
+
+## Conclusion 
+
+In general terms, this study has been successful: it allows me to replicate previous results and gives interesting insights about the structures of moral trangressions. It can help me shed light on why there have been so many debates around the nature of "harmless" wrongs. These events have "weird" structures: they involve good behaviors and potent behaviors, which usually do not make the objects seem significantly weaker than they were before. If this line of argument is defensible - and methodologically sound - I have made good progress in explaining what's "weird" about harmless wrongs. 
 
 
 
