@@ -30,6 +30,7 @@ library(broom)
 library(psych)
 library(brms)
 library(plotly)
+library(sjPlot)
 theme_set(theme_light())
 
 # Load in the conservative data
@@ -400,7 +401,7 @@ d_long_scaled <-
 m1 <- lmer(immoral ~ harm + def + unexpected + (1 | id) + (1 | scenario),
           data = d_long_scaled)
 
-tidy(m1)
+tab_model(m1, p.val = ("kr"))
 ```
 
 In this model, harm significantly predicts immorality and so does unexpectedness. Deflection, however, is a poor predictor of wrongdoing. One thing to take into account here is that there is not a lot of variation in deflection - I only have 25 data points - and, therefore, establishing relationships can be difficult. However, the sign and the magnitudes of the coefficients do not speak favorably of deflection's capacity to predict immorality. This is not necessarily a surprise: this study was, in part, motivated by the discrepancy between deflection and the severity of certain scenarios. Moreover, deflection is not meant to capture immorality but rather unexpectenedness. Perhaps a more direct test of deflection's explanatory power in the moral domain would be to test its capacity to account for unexpectedness.
@@ -412,7 +413,7 @@ In this model, harm significantly predicts immorality and so does unexpectedness
 m2 <- lmer(unexpected ~ 1 + def + harm + immoral + (1 | id) + (1 | scenario),
            data = d_long_scaled)
 
-tidy(m2)
+tab_model(m2, p.val = ("kr"))
 
 ```
 
@@ -426,12 +427,12 @@ It is possible to go beyond deflection, and to have a deeper look at whether the
 m5 <- lmer(immoral ~ 1 + ae + ap + aa + be + bp + ba + oe + op + oa + (1 | id) + (1 | scenario),
            data = d_long_scaled)
 
-tidy(m5)
+tab_model(m5)
 # Immorality predicted by the transformations in EPA profiles 
 m6 <- lmer(immoral ~ 1  + dae + dap + daa + dbe + dbp + dba + doe + dop + doa + (1 |id) + (1 | scenario),
            data = d_long_scaled)
 
-tidy(m6)
+tab_model(m6)
 ```
 
 Both models fit the data poorly (their BICs are quite high). Again, this suggests that, in  these data, EPA profiles are not very predictive of immorality. In the first model, the only value that comes close to the threshold of significance is the potency of the behavior. As behaviors become more potent, immorality appears to increase. However, I cannot draw strong conclusions from this. 
@@ -446,7 +447,7 @@ To close this analysis, I will examine the predictive capacity of the EPA profil
 m8 <- lmer(immoral ~ 1 + ae + ap + aa + be + bp + ba + oe + op + oa + (1 | id) + (1 | scenario),
            data = filter(d_long_scaled, type != "purity"))
 
-tidy(m8)
+tab_model(m8)
 
 ```
 
