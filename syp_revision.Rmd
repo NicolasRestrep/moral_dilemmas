@@ -1,9 +1,11 @@
 ---
 title: "Second Year Paper"
-subtitle: "Revised Statement"
 author: "Nicolas Restrepo"
 date: "11/30/2019"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
+subtitle: Revised Statement
 header-includes:
 - \usepackage{setspace}
 - \doublespacing
@@ -485,7 +487,7 @@ In terms of their affective meanings, the fundamental difference between both st
 
 ## Conclusion 
 
-In general terms, this study has been successful: it allows me to replicate previous results and gives interesting insights about the structures of moral trangressions. It can help me shed light on why there have been so many debates around the nature of "harmless" wrongs. These events have "weird" structures: they involve good behaviors and potent behaviors, which usually do not make the objects seem significantly weaker than they were before. If this line of argument is defensible - and methodologically sound - I have made good progress in explaining what's "weird" about harmless wrongs. 
+In general terms, this study has been successful: it allows me to replicate previous results and gives interesting insights about the structures of moral trangressions. Importantly, it can help shed light on why there have been so many debates around the nature of "harmless" wrongs. These events have "weird" structures: they involve good and potent behaviors, which usually do not make the objects seem significantly weaker than they were before. If this line of argument is defensible - and methodologically sound - I have made good progress in explaining what's "weird" about harmless wrongs. 
 
 
 
