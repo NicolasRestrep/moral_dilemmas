@@ -29,6 +29,8 @@ library(psych)
 library(brms)
 library(plotly)
 library(sjPlot)
+library(colorspace)
+
 theme_set(theme_light())
 ```
 
@@ -293,10 +295,14 @@ dsl <- d_long %>%
             mean_imm = mean(immoral), 
             mean_unex = mean(unexpected)) 
 
+# Color types 
+
+types_color <- qualitative_hcl(5, palette = "Dark 3")
+
 dsl %>% 
-  filter(type != 'purity') %>% 
-  ggplot(aes(x = distances, y = mean_imm)) + 
-  geom_smooth(aes(x = distances, y = mean_imm), method = 'lm') + 
-  geom_point(aes(col = type))
+  ggplot(aes(x = distances, y = mean_imm, col = type)) + 
+  geom_point() +
+  scale_color_manual(values = types_color) + 
+  geom_text(aes(label = scenario), hjust = 0)
   
 ```
