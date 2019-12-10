@@ -34,7 +34,9 @@ library(colorspace)
 theme_set(theme_light())
 ```
 
-The setup here is the same as in previous analyses 
+Here, I am going to briefly explore the euclidean distances between the prototype - person kills a person - and the other events, along the relevant axes. This is going to be very exploratory: the idea is to see whether there are patterns in the distances, and if these patterns are related to broader perceptions of immorality. 
+
+The data cleaning and preparation is the same as in previous analyses. 
 
 ```{r}
 
@@ -241,7 +243,7 @@ gd <- gd %>%
 
 ```
 
-I am going to explore some of the distances between the prototype and the other scenarios. To begin let me define a function to calculate euclidean distance between two points in 3 dimensional space. 
+Now, I am going to calculate the distances in a three-dimensional space consisting of three axes: the object's potency, the behavior's evaluation, and the behavior's potency. In order to do this I am goint to define a function to calculate euclidean distance between two points in 3 dimensional space. 
 
 ```{r}
 
@@ -250,7 +252,7 @@ I am going to explore some of the distances between the prototype and the other 
 eucl_dist <- function(op, be, bp) { 
   
    # Formula   
-  
+  # The values of the prototype are always the ones the events are compared against
   distance <- sqrt((0.95 - op)^2 + ((-4.26) - be)^2 + (1.95 - bp)^2)
   
   return(as.double(distance))
@@ -258,7 +260,7 @@ eucl_dist <- function(op, be, bp) {
 
 ```
 
-Now let's see if I can make function run on my actual values
+Having defined the function, I will calculate the distances and append them to our existing dataset.
 
 ```{r}
 
@@ -287,12 +289,6 @@ events_values <- events_values %>%
   cbind(distances) %>% 
   select(scenario, distances)
 
-```
-
-Alright, now we have the distances on the three axes for the scenarios. Can I join them with the big dataset.
-
-```{r}
-
 # Join values with the long dataset 
 
 d_long <- d_long %>% 
@@ -300,7 +296,7 @@ d_long <- d_long %>%
 
 ```
 
-Got the distances, now let's do some summary plots. 
+At this point, we can begin producing some summary plots. Below I will visualize the relationship between the event's distance from the prototype and its average immorality. We know from previous analyses that the purity scenarios are quite far away from the prototype but are still considered highly immoral. Therefore, I will create two plots: one including and the other excluding purity trangressions. 
 
 ```{r}
 # create mean measures from the long dataset
@@ -325,7 +321,7 @@ dsl %>%
   geom_smooth(inherit.aes = F, aes(x = distances, y = mean_imm), data = dsl, method = "lm", alpha = 0.2) + theme(legend.position = "bottom") +
   labs(x = "Distance from prototype", 
        y = "Average Immorality", 
-       title = "")
+       title = "Immorality explained by distance from the prototype")
 
 # Plot exluding the purity scenarios 
 
@@ -338,13 +334,14 @@ dsl %>%
   geom_smooth(inherit.aes = F, aes(x = distances, y = mean_imm), method = "lm", alpha = 0.2) + theme(legend.position = "bottom") +
   labs(x = "Distance from prototype", 
        y = "Average Immorality", 
-       title = "")
+       title = "Immorality explained by distance from the prototype", 
+       subtitle = "Excluding purity")
   
 ```
 
-We see an interesting pattern here. In the plot that includes all scenarios, there seems to be no relationship between average immorality and distance from the prototype. When we exclude purity, however, the relationship becomes negative, as we would have expected. 
+We see an interesting pattern here. In the plot that includes all scenarios, there seems to be no relationship between average immorality and distance from the prototype. When we exclude purity, however, the relationship becomes negative, as we would have expected. This is encouraging because it resonates with Kurt's theory. As *most* trangressions move away from the template of the moral dyad, they become less immoral.
 
-Nonetheless, there is an issue here: including the object's potency in our calcculation of distance seems a bit dubious. This is because our previous analysis shows that as the object's potency increases, immorality decreases. Here, then, we are wrongly "penalizing" the scenarios that have more vulnerable patients that that included in our prototype - i.e. person -, which is fairly neutral. For that reason, I am going to calculate distance from the prototype, only considering behavior evaluation and behavior potency. 
+Nonetheless, there is an issue here: including the object's potency in our calculations of distance could be misleading. As our previous analysis shows that increases in the object's potency lead to decreases in the event's severity. In this calculation, then, we are wrongly "penalizing" the scenarios that have more vulnerable patients than the one that features in our prototype - i.e. person -, which is fairly neutral. For that reason, I am going to calculate distance from the prototype, only considering the behavior's evaluation and potency. 
 
 Let's adjust the function and calculate the new distances: 
 
@@ -420,7 +417,8 @@ dsl_two %>%
   geom_smooth(inherit.aes = F, aes(x = distances_2, y = mean_imm), data = dsl, method = "lm", alpha = 0.2) + theme(legend.position = "bottom") +
   labs(x = "Distance from prototype", 
        y = "Average Immorality", 
-       title = "")
+       title  = "Immorality explained by distance from the prototype", 
+       subtitle = "2-D distance")
 
 # Plot exluding the purity scenarios 
 
@@ -433,7 +431,13 @@ dsl_two %>%
   geom_smooth(inherit.aes = F, aes(x = distances_2, y = mean_imm), method = "lm", alpha = 0.2) + theme(legend.position = "bottom") +
   labs(x = "Distance from prototype", 
        y = "Average Immorality", 
-       title = "")
+       title  = "Immorality explained by distance from the prototype", 
+       subtitle = "Excluding purity and using 2-D distance")
 
 ```
 
+The relationships are very similar to the ones above. When purity trangressions are excluded, distance from the prototype has a negative relationship with average immorality. Again, this echoes the predictions of the theory of dyadic morality. 
+
+## Differential Attribution of Harm
+
+It is important to remember that if we conduct the reaction-time study, we would not necessarily be interested in the relationship between reaction time and severity (although we certainly will explore it). The argument is rather that distance from the prototype will be negatively related to reaction time. It is not, then, that events that are far away from the template are less severe - although that is probably the case - but that attributing harm and immorality to them is more cognitively difficult. This would help explain why we are fascinated by 'purity' trangressions, and perhaps why groups have found it necessary to construct such elaborate rules around them. 
