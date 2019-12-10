@@ -5,11 +5,14 @@ date: "12/9/2019"
 output: html_document
 ---
 
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r setup}
+## Exploring distances from the prototype 
+
+```{r packages}
 # Packages 
 library(tidyverse)
 library(knitr)
@@ -27,6 +30,11 @@ library(brms)
 library(plotly)
 library(sjPlot)
 theme_set(theme_light())
+```
+
+The setup here is the same as in previous analyses 
+
+```{r}
 
 # Load in the conservative data
 c_data <- read_csv("data/conservatives_full.csv")
@@ -231,12 +239,10 @@ gd <- gd %>%
 
 ```
 
-
-The set up is the same. 
-
 I am going to explore some of the distances between the prototype and the other scenarios. To begin let me define a function to calculate euclidean distance between two points in 3 dimensional space. 
 
 ```{r}
+
 eucl_dist <- function(op, be, bp) { 
   
   distance <- sqrt((0.95 - op)^2 + ((-4.26) - be)^2 + (1.95 - bp)^2)
@@ -263,7 +269,34 @@ d <- eucl_dist(op = events_values[i, 2],
 }
 
 events_values <- events_values %>% 
-  cbind(distances)
+  cbind(distances) %>% 
+  select(scenario, distances)
 
 ```
 
+Alright, now we have the distances on the three axes for the scenarios. Can I join them with the big dataset
+
+```{r}
+
+d_long <- d_long %>% 
+  left_join(events_values, by = "scenario")
+```
+
+Got the distances, now let's do some summary plots. 
+
+```{r}
+# create mean measures from the long dataset
+
+dsl <- d_long %>% 
+  group_by(scenario, type, def, dop, distances) %>% 
+  summarise(mean_harm = mean(harm), 
+            mean_imm = mean(immoral), 
+            mean_unex = mean(unexpected)) 
+
+dsl %>% 
+  filter(type != 'purity') %>% 
+  ggplot(aes(x = distances, y = mean_imm)) + 
+  geom_smooth(aes(x = distances, y = mean_imm), method = 'lm') + 
+  geom_point(aes(col = type))
+  
+```
