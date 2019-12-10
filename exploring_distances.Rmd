@@ -245,7 +245,11 @@ I am going to explore some of the distances between the prototype and the other 
 
 ```{r}
 
+# Create function to calculate the euclidean distance in three-dimensional space 
+
 eucl_dist <- function(op, be, bp) { 
+  
+   # Formula   
   
   distance <- sqrt((0.95 - op)^2 + ((-4.26) - be)^2 + (1.95 - bp)^2)
   
@@ -257,10 +261,17 @@ eucl_dist <- function(op, be, bp) {
 Now let's see if I can make function run on my actual values
 
 ```{r}
+
+# Select the three axes we are interested in 
+
 events_values <- events_def %>% 
   select(scenario, op, be, bp)
 
+# Create empty vector for the distances of all 25 events 
+
 distances <- rep(0, 25)
+
+# Loop for creating all 25 values 
 
 for (i in 1:25) {
   
@@ -270,18 +281,23 @@ d <- eucl_dist(op = events_values[i, 2],
   distances[[i]] <- d
 }
 
+# Column-bind the values to the events dataframe 
+
 events_values <- events_values %>% 
   cbind(distances) %>% 
   select(scenario, distances)
 
 ```
 
-Alright, now we have the distances on the three axes for the scenarios. Can I join them with the big dataset
+Alright, now we have the distances on the three axes for the scenarios. Can I join them with the big dataset.
 
 ```{r}
 
+# Join values with the long dataset 
+
 d_long <- d_long %>% 
   left_join(events_values, by = "scenario")
+
 ```
 
 Got the distances, now let's do some summary plots. 
@@ -295,14 +311,129 @@ dsl <- d_long %>%
             mean_imm = mean(immoral), 
             mean_unex = mean(unexpected)) 
 
-# Color types 
+# Create a set of colors 
 
 types_color <- qualitative_hcl(5, palette = "Dark 3")
+
+# Plot including all scenarios 
 
 dsl %>% 
   ggplot(aes(x = distances, y = mean_imm, col = type)) + 
   geom_point() +
   scale_color_manual(values = types_color) + 
-  geom_text(aes(label = scenario), hjust = 0)
+  geom_text(aes(label = scenario), hjust = 0, show.legend = F) + 
+  geom_smooth(inherit.aes = F, aes(x = distances, y = mean_imm), data = dsl, method = "lm", alpha = 0.2) + theme(legend.position = "bottom") +
+  labs(x = "Distance from prototype", 
+       y = "Average Immorality", 
+       title = "")
+
+# Plot exluding the purity scenarios 
+
+dsl %>% 
+  filter(type != 'purity') %>% 
+  ggplot(aes(x = distances, y = mean_imm, col = type)) + 
+  geom_point() +
+  scale_color_manual(values = types_color) + 
+  geom_text(aes(label = scenario), hjust = 0, show.legend = F) + 
+  geom_smooth(inherit.aes = F, aes(x = distances, y = mean_imm), method = "lm", alpha = 0.2) + theme(legend.position = "bottom") +
+  labs(x = "Distance from prototype", 
+       y = "Average Immorality", 
+       title = "")
   
 ```
+
+We see an interesting pattern here. In the plot that includes all scenarios, there seems to be no relationship between average immorality and distance from the prototype. When we exclude purity, however, the relationship becomes negative, as we would have expected. 
+
+Nonetheless, there is an issue here: including the object's potency in our calcculation of distance seems a bit dubious. This is because our previous analysis shows that as the object's potency increases, immorality decreases. Here, then, we are wrongly "penalizing" the scenarios that have more vulnerable patients that that included in our prototype - i.e. person -, which is fairly neutral. For that reason, I am going to calculate distance from the prototype, only considering behavior evaluation and behavior potency. 
+
+Let's adjust the function and calculate the new distances: 
+
+```{r}
+
+# Create new function
+
+distance_two <- function( be, bp) { 
+  
+   # Formula   
+  
+  distance <- sqrt(((-4.26) - be)^2 + (1.95 - bp)^2)
+  
+  return(as.double(distance))
+}
+
+# Select the three axes we are interested in 
+
+events_values_2 <- events_def %>% 
+  select(scenario, be, bp)
+
+# Create empty vector for the distances of all 25 events 
+
+distances_2 <- rep(0, 25)
+
+# Loop for creating all 25 values 
+
+for (i in 1:25) {
+  
+d <- distance_two( 
+          be = events_values_2[i, 2], 
+          bp = events_values_2[i, 3])
+  distances_2[[i]] <- d
+}
+
+# Column-bind the values to the events dataframe 
+
+events_values_2 <- events_values_2 %>% 
+  cbind(distances_2) %>% 
+  select(scenario, distances_2)
+
+
+# Join values with the long dataset 
+
+d_long_two <- d_long %>% 
+  left_join(events_values_2, by = "scenario")
+
+# create mean measures from the long dataset
+
+dsl_two <- d_long_two %>% 
+  group_by(scenario, type, def, dop, distances_2) %>% 
+  summarise(mean_harm = mean(harm), 
+            mean_imm = mean(immoral), 
+            mean_unex = mean(unexpected))
+
+```
+
+Now, we can create the second set of summary plots: 
+
+```{r}
+
+# Create a set of colors 
+
+types_color <- qualitative_hcl(5, palette = "Dark 3")
+
+# Plot including all scenarios 
+
+dsl_two %>% 
+  ggplot(aes(x = distances_2, y = mean_imm, col = type)) + 
+  geom_point() +
+  scale_color_manual(values = types_color) + 
+  geom_text(aes(label = scenario), hjust = 0, show.legend = F) + 
+  geom_smooth(inherit.aes = F, aes(x = distances_2, y = mean_imm), data = dsl, method = "lm", alpha = 0.2) + theme(legend.position = "bottom") +
+  labs(x = "Distance from prototype", 
+       y = "Average Immorality", 
+       title = "")
+
+# Plot exluding the purity scenarios 
+
+dsl_two %>% 
+  filter(type != 'purity') %>% 
+  ggplot(aes(x = distances_2, y = mean_imm, col = type)) + 
+  geom_point() +
+  scale_color_manual(values = types_color) + 
+  geom_text(aes(label = scenario), hjust = 0, show.legend = F) + 
+  geom_smooth(inherit.aes = F, aes(x = distances_2, y = mean_imm), method = "lm", alpha = 0.2) + theme(legend.position = "bottom") +
+  labs(x = "Distance from prototype", 
+       y = "Average Immorality", 
+       title = "")
+
+```
+
