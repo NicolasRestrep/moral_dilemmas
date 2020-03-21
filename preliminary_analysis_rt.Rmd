@@ -1,17 +1,17 @@
 ---
-title: "Reaction Time - Liberals"
+title: "Preliminary Analysis - Reaction Time Data"
 author: "Nicolas Restrepo"
-date: "1/29/2020"
+date: "2/10/2020"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = F)
 ```
 
-## Analysis of the Reaction Time Study (Liberal Sample)
+## Preliminary analysis of the full sample
 
-```{r, message=FALSE}
+```{r}
 # Packages 
 library(tidyverse)
 library(knitr)
@@ -28,23 +28,38 @@ library(psych)
 library(brms)
 library(plotly)
 library(sjPlot)
+library(corrplot)
 theme_set(theme_light())
 ```
 
-I'm going to begin by loading in the data. 
-
-```{r, message = FALSE}
-# Load in the data 
-rt_liberal <- read_csv("rt_liberal.csv")
-```
-
-As a first step I am going to check how people did in the attention checks. 
+Let's begin by loading in both datasets. 
 
 ```{r}
-# Delete unnecessary rows
+
+# Load in conservative data
+rt_conservative <- read_csv("rt_conservative_February 10, 2020_10.42.csv")
+
+# Load in liberal data 
+rt_liberal <- read_csv("rt_liberal.csv")
+
+```
+
+Now, I am going to clean up the data a bit and delete participants who did not pass the attention checks. 
+
+```{r}
+
+# Delete unnecessary rows 
+rt_conservative <- rt_conservative[-(1:2),]
 rt_liberal <- rt_liberal[-(1:2),]
 
 # How many people passed the attention checks?
+rt_conservative <- rt_conservative %>% 
+  mutate(passed = if_else(att_1 == "Harmless (K)" & att_2 == "Immoral (J)" & att_3 == "Harmful (J)", 1, 0)) 
+
+rt_conservative %>% 
+  group_by(passed) %>% 
+  summarise(n())
+
 rt_liberal <- rt_liberal %>% 
   mutate(passed = if_else(att_1 == "Harmless (K)" & att_2 == "Immoral (J)" & att_3 == "Harmful (J)", 1, 0)) 
 
@@ -52,122 +67,33 @@ rt_liberal %>%
   group_by(passed) %>% 
   summarise(n()) 
 
-# Filter out the people who failed the attention checks 
-rt_liberal <- rt_liberal %>% 
+
+```
+
+For the liberal sample, we got 97 responses and 5 people missed their attention checks. For the conservative sample, we got 98 responses and 6 people did not passed all attention checks. In total, then, our sample will be composed of 184 respondents. 
+
+I am going to join both dataframes and reshape them so that we can conduct the analyses. 
+
+```{r}
+
+# Join both datasets 
+data <- rbind(rt_liberal, rt_conservative)
+
+# Filter people who did not pass
+data <- data %>% 
   filter(passed == 1)
-```
 
-From the 100 surveys I sent out, 97 were completed. There were three in which the respondents reported technical problems. From these 97 respondents, 92 passed all the attention checks. I am going to go ahead and continue this preliminary analysis with these 92 cases. 
-
-Now, I am going to run some quick diagnostics. I am mostly looking for overly short responses, which would indicate either a misclick or random key stroke. Before that I will do a fair amount of reshaping. 
-
-```{r}
-
-# Only keep reaction time data and put it in the long format 
-rt_liberal_times <- rt_liberal %>% 
-  select(ends_with("Page Submit")) %>% 
-  mutate(ids = 1:92) %>% 
-  pivot_longer(1:50, names_to = "scenario", values_to = "reaction_time") %>% 
-  mutate(scenario = str_remove(scenario, "_t_Page Submit$"))
-
-# Get summary statistics 
-gd <- rt_liberal_times %>% 
-  mutate(reaction_time = as.numeric(reaction_time)) %>% 
-  group_by(scenario) %>% 
-  summarise(avg = mean(reaction_time), 
-            st_dv = sd(reaction_time),
-            med = median(reaction_time)) %>% 
-  mutate(ci_lower = avg - 1.96*st_dv, 
-         ci_upper = avg + 1.96*st_dv)
-
-# Create a quick summary table
-rt_liberal_times %>% 
-  mutate(reaction_time = as.numeric(reaction_time)) %>% 
-  summarise(avg = mean(reaction_time), 
-            stv = sd(reaction_time)) %>% 
-  mutate(ci_lower = avg - 1.96*stv, 
-         ci_upper = avg + 1.96*stv) %>% 
-  kable(.) %>% 
-  kable_styling()
-
-# Now check for exceedingly low responses 
-sum(rt_liberal_times$reaction_time < 1)
-sum(rt_liberal_times$reaction_time > 5.58)
-sum(rt_liberal_times$reaction_time > 9)
-```
-
-I need to think more about what to do with the observations that are considerably above the mean (for example those above 9). However, I am pretty sure that those 4 observations under a second are misclicks. I will go ahead replace their values for the median of their respective scenario. There is probably a more informed way to do this, but I think this will suffice for the preliminary analysis.  
-
-
-```{r}
-# Which are the responses below 1 second?
-which(rt_liberal_times$reaction_time < 1)
-
-# Replace them with the appropriate median
-rt_liberal_times[767,] <- gd[gd$scenario=="i_ccr",4]
-rt_liberal_times[1119,] <- gd[gd$scenario=="i_msn",4]
-rt_liberal_times[1514,] <- gd[gd$scenario=="i_ayc",4]
-rt_liberal_times[2757,] <- gd[gd$scenario=="i_elb",4]
-```
-
-Having replaced those values, I am going to produce some descriptive plots. 
-
-```{r}
-# Now let's plot harm 
-
-# Keep only harm questions 
-
-gdh <- gd[str_which(gd$scenario, "h_"),]
-
-# Plot harm questions 
-gdh %>% 
-  mutate(scenario = str_remove(scenario, "h_")) %>% 
-  ggplot(aes(x = reorder(scenario, avg), y = avg)) + 
-  geom_point(col = "darkred", fill = "darkred") +
-  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper)) +
-  coord_flip() + 
-  labs(x = "", 
-       y = "RT", 
-       title = "Reaction Time - Harmfulness", 
-       caption = "Circles = Mean")
-
-# Get only Immorality questions 
-gdi <- gd[str_which(gd$scenario, "i_"),]
-
-# Plot harm questions 
-gdi %>% 
-  mutate(scenario = str_remove(scenario, "i_")) %>% 
-  ggplot(aes(x = reorder(scenario, avg), y = avg)) + 
-  geom_point(col = "darkred", fill = "darkred") + 
-  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper)) +
-  coord_flip() + 
-  labs(x = "", 
-       y = "RT", 
-       title = "Reaction Time - Immorality",
-       caption = "Circles = Mean")
-
-```
-
-At first glance, the confidence intervals look quite wide. It is important to think whether the variation in the data is coming from real empirical variability or whether the instrument is too noisy. I certainly need to spend more time thinking about the latter. 
-
-Another aspect that worries me is some kind of "practice effect". In the survey, questions about immorality come before questions of harm. If we look at "mother sexually arouses son", it has one of the highest average reaction time in immorality. However, when it comes to harm, it has the 4th lowest. This might be because, at first, it took a while for respondents to read and understand the sentence. By the second time, their minds were made up. I will explore this more below. 
-
-The most prototypical scenarios have consistently the lowest reaction times. However, at this point, it does not seem that distance from the prototype would be very informative when predicting reaction time. Let's dig deeeper. 
-
-
-Let's try to recreate Gray and Keeney's reaction time plot. 
-
-```{r}
+# Now let's turn this into a long dataframe 
 
 # Create a manageable wide dataframe 
 
-rtw <- rt_liberal %>% 
+rtw <- data %>% 
   select(ends_with("Page Submit"), i_phc, i_pkp, i_tmdp, i_adr, i_elb, 
          i_acr, i_jbd, i_scc, i_ddf, i_git, i_idb, i_ayc, i_sip, i_ecc, 
          i_ccr, i_mbr, i_msn, i_mbw, i_php, i_mmc, i_mmls, i_msas, i_mpsa, i_whh, i_thls, h_phc, h_pkp, h_tmdp, h_adr, h_elb, 
          h_acr, h_jbd, h_scc, h_ddf, h_git, h_idb, h_ayc, h_sip, h_ecc, 
          h_ccr, h_mbr, h_msn, h_mbw, h_php, h_mmc, h_mmls, h_msas, h_mpsa, h_whh, h_thls) %>% 
-  mutate(ids = 1:92) %>% 
+  mutate(ids = 1:184) %>% 
   select(ids, everything())
 
 
@@ -213,17 +139,6 @@ d_long_imm <- left_join(d_long_imm_rt, d_long_imm_bin, by = c('ids', 'scenario')
 
 d_long <- left_join(d_long_harm, d_long_imm, by = c('ids', 'scenario')) %>% 
   mutate_at(c('reaction_time_harm', 'reaction_time_imm'), as.numeric)
-
-# Replace < 1 values here 
-
-which(d_long$reaction_time_imm < 1)
-which(d_long$reaction_time_harm < 1)
-
-d_long[392,5] <- gd[gd$scenario=="i_ccr",4]
-d_long[569,5] <- gd[gd$scenario=="i_msn",4]
-d_long[764,5] <- gd[gd$scenario=="i_ayc",4]
-d_long[1382,5] <- gd[gd$scenario=="i_elb",4]
-
 
 
 # Let's get some information about the events in there 
@@ -271,7 +186,128 @@ events_def <- selected_events %>%
 d_long <- d_long %>% 
   left_join(events_def, by = "scenario")
 
-# Get the averages so we can plot them 
+```
+
+Now, we have a more suitable dataframe. Before I begin the descriptive analysis, I am going to look for extreme values: responses that are either below 1 second or above 10. These are clearly errors and I will replace them with the median response time for the respective scenario. This approach can be revised of course, but I will use median imputation for now. 
+
+```{r, results="hide"}
+
+# How many weird responses do we have? 
+
+sum(d_long$reaction_time_harm < 1)
+sum(d_long$reaction_time_imm < 1)
+sum(d_long$reaction_time_harm > 10)
+sum(d_long$reaction_time_imm > 10)
+
+# There are 66 responses that don't seem valid. Let's replace them with the median imputation 
+# First I need to calculate the median for the scenarios 
+
+median_rt <- d_long %>% 
+  group_by(scenario) %>% 
+  summarise(med_imm = median(reaction_time_imm), 
+            med_harm = median(reaction_time_harm))
+
+# Function for replacing immorality values 
+
+replace_imm <- function(x) {
+  
+ss <- d_long[x, 2] %>% 
+  as.vector() %>% 
+  as.character()
+
+i_scenario <- median_rt %>% 
+  filter(str_detect(scenario, ss)) %>% 
+  select(med_imm) %>% 
+  as.numeric() %>% 
+  as.vector()
+
+d_long[x, 5] <<- i_scenario
+
+}
+
+# Function for replacing harm values 
+
+replace_harm <- function(x) {
+  
+ss <- d_long[x, 2] %>% 
+  as.vector() %>% 
+  as.character()
+
+h_scenario <- median_rt %>% 
+  filter(str_detect(scenario, ss)) %>% 
+  select(med_harm) %>% 
+  as.numeric() %>% 
+  as.vector()
+
+d_long[x, 3] <<- h_scenario
+
+}
+
+# Map all small immorality values 
+smaller_imm <- which(d_long$reaction_time_imm < 1)
+
+map(.x = smaller_imm, .f = replace_imm)
+
+# Map all small harm values 
+smaller_harm <- which(d_long$reaction_time_harm < 1)
+
+map(.x = smaller_harm, .f = replace_harm)
+
+# Map all big immorality values 
+large_imm <- which(d_long$reaction_time_imm > 10)
+
+map(.x = large_imm, .f = replace_imm)
+
+# Map all large harm values 
+large_harm <- which(d_long$reaction_time_harm > 10)
+
+map(.x = large_harm, .f = replace_harm)
+
+```
+
+We are ready to produce some descriptive plots. 
+
+```{r}
+
+d_long %>% 
+  group_by(scenario) %>% 
+  summarise(avg = mean(reaction_time_imm), 
+            st_dv = sd(reaction_time_imm)) %>% 
+  mutate(ci_lower = avg - 1.96*st_dv, 
+         ci_upper = avg + 1.96*st_dv) %>% 
+  ggplot(aes(x = reorder(scenario, avg), y = avg)) + 
+  geom_point(col = "darkred", fill = "darkred") +
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper)) +
+  coord_flip() + 
+  labs(x = "", 
+       y = "RT", 
+       title = "Reaction Time - Immorality", 
+       caption = "Circles = Mean")
+
+d_long %>% 
+  group_by(scenario) %>% 
+  summarise(avg = mean(reaction_time_harm), 
+            st_dv = sd(reaction_time_harm)) %>% 
+  mutate(ci_lower = avg - 1.96*st_dv, 
+         ci_upper = avg + 1.96*st_dv) %>% 
+  ggplot(aes(x = reorder(scenario, avg), y = avg)) + 
+  geom_point(col = "darkred", fill = "darkred") +
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper)) +
+  coord_flip() + 
+  labs(x = "", 
+       y = "RT", 
+       title = "Reaction Time - Harm", 
+       caption = "Circles = Mean")
+
+```
+
+The confidence intervals here are quite wide, which is not very encouraging. Reaction time studies tend to be noisy so it's important to take this variation into account as we move forward. 
+
+Again, the most prototypical scenarios have consistently the lowest reaction times, with the exception of "man betrays wife". However, there does not seem to be a strong relationship between reaction time and distance from the prototype. 
+
+Let's see whether we can recreate Gray and Keeney's plot. 
+
+```{r}
 
 dsl <- d_long %>% 
   group_by(scenario, type) %>% 
@@ -286,7 +322,7 @@ dsl %>%
   geom_text_repel(aes(label = scenario), show.legend = F)
 ```
 
-There seems to be a strong positive relationship between reaction times in both sections. This is encouraging because it shows that the "practice effect" might not be as strong as previously expected. We can also reproduce the plot by Gray and Keeney quite reliably. I still think that length and complexity are doing a lot of work here. For example, employee conspires with competitor is a complex and long sentence that has consistently high reaction time. The same applies for "married person has sex with adulterer". 
+There seems to be a strong positive relationship between reaction times in both sections. This is encouraging because it shows that the "practice effect" might not be as strong as previously expected. We can also reproduce the plot by Gray and Keeney quite reliably. I think that length and complexity are doing a lot of work here. For example, employee conspires with competitor is a complex and long sentence that has consistently high reaction time. The same applies for "married person has sex with adulterer". 
 
 Let's look at the distribution of the reaction times more closely. 
 
@@ -348,10 +384,9 @@ d_long %>%
         y = "")
 ```
 
-Again, there are interesting patterns here. For example, there is not much disagreement around the prototypical scenarios. Around scenarios like men marrying their cousing or hiring prostitutes there is much more disagreement. This is what we would expect. 
+Again, there are interesting patterns here. For example, there is not much disagreement around the prototypical scenarios. Around scenarios like men hiring prostitutes, however, there is almost an even split. Encouragingly, this is what we would expect. 
 
-
-I want to check how length correlates with reaction time. 
+Let's also look at the relationship between the length of the scenario and reaction time. 
 
 ```{r}
 
@@ -509,13 +544,35 @@ dsl %>%
        y = "RT Harmfulness", 
        title = "Reaction time for Harmfulness explained by distance from the prototype")
 
+# Create new function with Person hurts child as the prototype 
+
+eucl_dist_prot <- function(x) { 
+  op <-  events_values[x, 2] 
+  be <-  events_values[x, 3] 
+  bp <-  events_values[x, 4]
+  
+  # Formula   
+  # The values of the prototype are always the ones the events are compared against
+  distance <- sqrt(((-1.14) - op)^2 + ((-4.26) - be)^2 + (1.95 - bp)^2)
+  return(as.double(distance))
+}
+
+
+distances_prot <- map_dbl(1:25, eucl_dist_prot)
+
+events_values_prot <- events_values %>% 
+  cbind(distances_prot) %>% 
+  select(scenario, distances_prot)
+
+# Join values with the long dataset 
+
+dsl <- dsl %>% 
+  left_join(events_values_prot, by = "scenario")
+
 ```
 
-If we calculate distance from "person hurts a child", we also get positive associations. Now, that we have these distances we can try to run some models with them. 
 
-## Preliminary models 
-
-Let's try to see how some preliminary regressions would look like. 
+If we calculate distance from "person hurts a child", we also get positive associations. Now, that we have these distances we can try to see the correlations between all the variables of interest. 
 
 ```{r}
 
@@ -523,7 +580,7 @@ Let's try to see how some preliminary regressions would look like.
 # Get the lengths and put them in the main dataset 
 
 lengths <- dsl %>% 
-  select(scenario, length, distances_phc, distances_pkp)
+  select(scenario, length, distances_phc, distances_pkp, distances_prot)
 
 d_long <- d_long %>% 
   select(1:16) %>% 
@@ -542,22 +599,46 @@ avg_rt <- d_long %>%
 
 d_long <- left_join(d_long, avg_rt, by = "ids")
 
+d_long %>% 
+  select(-c(1, 2, 4, 6, 8, 9:16)) %>% 
+  mutate_all(as.numeric) %>% 
+  cor() %>% 
+  corrplot(method = "number")
+```
+
+The correlation plot shows that the raw relationship between distances and reaction time is very small. I am now going to conduct more principled statistical analyses, but these correlations suggests that relationships will be hard to find. 
+
+## Preliminary models 
+
+Let's try to see how some preliminary regressions would look like. 
+
+```{r}
+
+# Add ideological beliefs
+
+data_pol <- data %>% 
+  select(ideology_1) %>% 
+  mutate(ids = 1:184)
+
+d_long <- left_join(d_long, data_pol, by = "ids")
+
 # Scale the dataframe 
 
 d_long_scaled <- 
   d_long %>% 
-  mutate_at(c("ids", "type", "scenario", "is_immoral", "is_harmful"), ~as.factor(.)) %>% 
+  mutate_at(c("ids", "type", "scenario", "is_immoral", "is_harmful", "ideology_1"), ~as.factor(.)) %>% 
   mutate_if(is.numeric, scale)
 
 # Now let's some models 
-#first let's check the relationship between immorality and harm 
 
-m1 <- lmer(reaction_time_harm ~ 1 + reaction_time_imm + length + (1 | ids) + (1 | scenario),
+# First let's check the relationship between immorality and harm 
+
+m1 <- lmer(reaction_time_harm ~ 1 + reaction_time_imm + length + (1 | ids) + (1 | scenario) + avg_rt,
            data = d_long_scaled)
 
 tab_model(m1, p.val = ("kr"))
 
-m2 <- lmer(reaction_time_imm ~ 1 + reaction_time_harm + length + (1 | ids) + (1 | scenario),
+m2 <- lmer(reaction_time_imm ~ 1 + reaction_time_harm + length + (1 | ids) + (1 | scenario) + avg_rt,
            data = d_long_scaled)
 
 tab_model(m2, p.val = ("kr"))
@@ -572,8 +653,20 @@ m4 <- lmer(reaction_time_harm ~ 1 + distances_phc + length + (1 | ids) + (1 | sc
 
 tab_model(m4, p.val = ("kr"))
 
+m5 <- glmer(is_immoral ~ 1 + distances_phc + length + (1 | ids) + (1 | scenario) + reaction_time_imm + reaction_time_harm,
+           data = d_long_scaled, 
+           family = binomial)
+
+tab_model(m5, p.val = ("kr"))
+
+m6 <- glmer(is_harmful ~ 1 + distances_phc + length + (1 | ids) + (1 | scenario) + reaction_time_imm + reaction_time_harm,
+           data = d_long_scaled, 
+           family = binomial)
+
+tab_model(m6, p.val = ("kr"))
+
 ```
 
-I want to draw attention to a couple of things here. First, reaction time of harm reliably predicts reaction time in immorality. This is not trivial. Given that harm comes later, this coefficient tells us that the practice effect is perhaps not as strong as previously thought. Maybe the instrument is getting at some underlying opinions, beyond reading ability and familiarity with the instrument. 
+We notice some predictable results. Reaction time for harmfulness is highly predictive of reaction time of immorality and vice versa. These relationships hold even if we control for the respondents' average reaction time. Although distance from the prototype appears to have a positive relationship with reaction-time, the coefficient does not reach significance. 
 
-Distance from the vulnerable prototype seems to have the predicted effect on reaction time. Though not significant in both instances, the confidence intervals suggest that the values lies above zero. This is even after we control for length. I find this quite encouraging. 
+The last two models are logistic regressions that predict the probability of categorizing an event as immoral or harmful. Here, we also notice expected relationships: as distance from the prototype gets larger, the probability of classifying an event as either immoral or harmful is reduced. However, the coefficient for distance only reaches significance in the model that predicts classification of harm. 
