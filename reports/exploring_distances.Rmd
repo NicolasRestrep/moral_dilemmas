@@ -1,0 +1,443 @@
+---
+title: "Exploring Distances"
+author: "Nicolas Restrepo"
+date: "12/9/2019"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
+```
+
+## Exploring distances from the prototype 
+
+```{r packages}
+# Packages 
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(ggrepel)
+library(gridExtra)
+library(haven)
+library(lavaan)
+library(lme4)
+library(nlme)
+library(stargazer)
+library(broom)
+library(psych)
+library(brms)
+library(plotly)
+library(sjPlot)
+library(colorspace)
+
+theme_set(theme_light())
+```
+
+Here, I am going to briefly explore the euclidean distances between the prototype - person kills a person - and the other events, along the relevant axes. This is going to be very exploratory: the idea is to see whether there are patterns in the distances, and if these patterns are related to broader perceptions of immorality. 
+
+The data cleaning and preparation is the same as in previous analyses. 
+
+```{r}
+
+# Load in the conservative data
+c_data <- read_csv("data/conservatives_full.csv")
+
+#Get rid of the first 2 rows 
+
+c_data <- c_data[-(1:2), ]
+
+# Load pretest data 
+
+p_data <- read_csv("data/pretest.csv")
+
+p_data <- p_data[-(1:3), ]
+
+# Load the liberal data 
+
+l_data <- read_csv("data/liberals_complete.csv")
+
+l_data <- l_data[-(1:2),]
+
+# Now bind them together 
+
+data <- rbind(c_data, p_data, l_data)
+
+# Get attention checks for the data 
+
+data <- data %>% 
+  mutate(passed_1 = ifelse(ach_1_1 == "extremely harmful", 1, 0), 
+         passed_2 = ifelse(ach_2_1 == "not at all immoral", 1, 0), 
+         passed_3 = ifelse(ach_3_1 == "moderately unexpected", 1, 0), 
+         passed_4 = ifelse(ach_4_1 == "not at all harmful", 1, 0), 
+         passed_5 = ifelse(ach_5_1 == "extremely immoral", 1, 0), 
+         passed_6 = ifelse(ach_6_1 == "extremely unexpected", 1, 0), 
+         sum_pass = passed_1 + passed_2 + passed_3 + passed_4 + passed_5 + passed_6)
+
+# Now drop cases which did not pass the attention checks 
+
+data <- data %>% 
+  filter(sum_pass == 6)
+
+# Create variable that indicates if someone is conservative
+
+data <- data %>% 
+  mutate(conservative = ifelse(ideology_1 == 5 | ideology_1 == 6 | ideology_1 == 7, 1, 0)) 
+
+
+# Mutate all main questions so that we get numbers 
+
+data <- data %>% 
+  mutate_at(vars(contains("_h_1")), funs(recode(., 
+                                   "not at all harmful" = 1, 
+                                   "slightly harmful" = 2, 
+                                   "moderately harmful" = 3, 
+                                   "very harmful" = 4, 
+                                   "extremely harmful" = 5))) %>% 
+  mutate_at(vars(contains("_i_1")), funs(recode(., 
+                                   "not at all immoral" = 1, 
+                                   "slightly immoral" = 2, 
+                                   "moderately immoral" = 3, 
+                                   "very immoral" = 4, 
+                                   "extremely immoral" = 5))) %>% 
+  mutate_at(vars(contains("_u_1")), funs(recode(., 
+                                   "not at all unexpected" = 1, 
+                                   "slightly unexpected" = 2, 
+                                   "moderately unexpected" = 3, 
+                                   "very unexpected" = 4, 
+                                   "extremely unexpected" = 5)))
+
+
+# Get of of the first set of uninformative columns 
+
+d <- data %>% 
+  select(-contains("ach")) %>% 
+  select(pkp_h_1:msas_u_1, ideology_1, conservative)
+
+# Now let's create a more amenable dataset 
+
+d <- d %>% 
+  mutate(id = 1:n()) %>% 
+  select(id, everything()) 
+
+# Rename all variables 
+
+d <- d %>%  
+  rename_all(
+    funs(str_remove(., "_1"))
+    ) %>% 
+  mutate_if(is.character, as.numeric)
+
+
+# Reshape harmful perceptions from wide to long 
+
+d_harm_long <- d %>% 
+  select(id, ideology, conservative, contains("_h")) %>% 
+  gather(key = "scenario", value = "harm", 4:28) %>% 
+  mutate(scenario = str_remove(scenario, "_h$"))
+
+# Reshape immoral perceptions from wide to long 
+
+d_imm_long <- d %>% 
+  select(id, ideology, conservative, contains("_i")) %>% 
+  gather(key = "scenario", value = "immoral", 4:28) %>% 
+  mutate(scenario = str_remove(scenario, "_i$"))
+
+# Reshape unexpected perceptions from wide to long 
+
+d_un_long <- d %>% 
+select(id, ideology, conservative, contains("_u")) %>% 
+  gather(key = "scenario", value = "unexpected", 4:28) %>% 
+  mutate(scenario = str_remove(scenario, "_u$"))
+
+# Now join them 
+
+d_long <- d_harm_long %>% 
+  mutate(immoral = d_imm_long$immoral, 
+         unexpected = d_un_long$unexpected)
+
+# Load dataset with the deflections 
+
+selected_events <- read_csv("data/full_events.csv")
+
+# Create column for abreviations 
+
+events <- c("pch", 
+            "pkp", 
+            "tmdp", 
+            "adr", 
+            "elb", 
+            "acr", 
+            "jbd", 
+            "scc", 
+            "ddf", 
+            "git", 
+            "idb", 
+            "ayc", 
+            "sip", 
+            "ecc", 
+            "ccr", 
+            "mbr", 
+            "msn", 
+            "mbw", 
+            "php", 
+            "mmc", 
+            "mmls", 
+            "msas", 
+            "mpsa", 
+            "whh", 
+            "thls")
+
+# Create new column 
+
+events_def <- selected_events %>% 
+  mutate(scenario = events) %>% 
+  select(scenario, def, type, 5:33)
+
+# Add to long dataset 
+
+d_long <- d_long %>% 
+  left_join(events_def, by = "scenario")
+
+# Create a variable for negative behavior 
+
+d_long <- d_long %>% 
+  mutate(neg_beh = ifelse(be < 0, 1, 0))
+
+
+# create a summary table for the values of each question 
+
+gd <- d %>% 
+  select(-c(id, ideology, conservative)) %>% 
+  gather(key = "scenario", 
+         value = "score") %>% 
+  group_by(scenario) %>% 
+  summarise_all(funs(med = median(.), avg = mean(.), maximum = max(.), minimum = min(.), st_dv = sd(.), fq = quantile(., 0.25), tq = quantile(., 0.75))) 
+
+gd <- gd %>% 
+  mutate(scenario = str_replace(scenario, "acr", "athlete_cheats_rival"), 
+         scenario = str_replace(scenario, "adr", "athlete_deceives_referee"), 
+         scenario = str_replace(scenario, "ayc", "athlete_yells_at_coach"), 
+         scenario = str_replace(scenario, "ccr", "coach_cheers_rival"), 
+         scenario = str_replace(scenario, "ddf", "daughter_disobeys_father"),
+         scenario = str_replace(scenario, "ecc", "employee_conspires_with_comp."),
+         scenario = str_replace(scenario, "elb", "employee_lies_to_boss"), 
+         scenario = str_replace(scenario, "git", "girl_interrupts_teacher"),
+         scenario = str_replace(scenario, "idb", "intern_disobeys_boss"), 
+         scenario = str_replace(scenario, "jbd", "judge_befriends_defendant"), 
+         scenario = str_replace(scenario, "mbr", "man_betrays_relative"), 
+         scenario = str_replace(scenario, "mbw", "man_betrays_wife"), 
+         scenario = str_replace(scenario, "mmc", "man_marries_cousin"),
+         scenario = str_replace(scenario, "mmls", "man_makes_love_sister"), 
+         scenario = str_replace(scenario, "mpsa", "married_has_sex_adulterer"), 
+         scenario = str_replace(scenario, "msas", "mother_sexually_arouses_son"), 
+         scenario = str_replace(scenario, "msn", "mayor_slanders_neighbor"), 
+         scenario = str_replace(scenario, "pch", "person_hurts_child"), 
+         scenario = str_replace(scenario, "php", "person_hires_prostitute"), 
+         scenario = str_replace(scenario, "pkp", "person_kills_person"),
+         scenario = str_replace(scenario, "scc", "student_cheats_classmate"), 
+         scenario = str_replace(scenario, "sip", "student_insults_professor"), 
+         scenario = str_replace(scenario, "thls", "teacher_hits_lazy_student"), 
+         scenario = str_replace(scenario, "whh", "wife_hits_husband"), 
+         scenario = str_replace(scenario, "tmdp", "teenager_mocks_disabled"))
+
+```
+
+Now, I am going to calculate the distances in a three-dimensional space consisting of three axes: the object's potency, the behavior's evaluation, and the behavior's potency. In order to do this I am goint to define a function to calculate euclidean distance between two points in 3 dimensional space. 
+
+```{r}
+
+# Create function to calculate the euclidean distance in three-dimensional space 
+
+eucl_dist <- function(op, be, bp) { 
+  
+   # Formula   
+  # The values of the prototype are always the ones the events are compared against
+  distance <- sqrt((0.95 - op)^2 + ((-4.26) - be)^2 + (1.95 - bp)^2)
+  
+  return(as.double(distance))
+}
+
+```
+
+Having defined the function, I will calculate the distances and append them to our existing dataset.
+
+```{r}
+
+# Select the three axes we are interested in 
+
+events_values <- events_def %>% 
+  select(scenario, op, be, bp)
+
+# Create empty vector for the distances of all 25 events 
+
+distances <- rep(0, 25)
+
+# Loop for creating all 25 values 
+
+for (i in 1:25) {
+  
+d <- eucl_dist(op = events_values[i, 2], 
+          be = events_values[i, 3], 
+          bp = events_values[i, 4])
+  distances[[i]] <- d
+}
+
+# Column-bind the values to the events dataframe 
+
+events_values <- events_values %>% 
+  cbind(distances) %>% 
+  select(scenario, distances)
+
+# Join values with the long dataset 
+
+d_long <- d_long %>% 
+  left_join(events_values, by = "scenario")
+
+```
+
+At this point, we can begin producing some summary plots. Below I will visualize the relationship between the event's distance from the prototype and its average immorality. We know from previous analyses that the purity scenarios are quite far away from the prototype but are still considered highly immoral. Therefore, I will create two plots: one including and the other excluding purity trangressions. 
+
+```{r}
+# create mean measures from the long dataset
+
+dsl <- d_long %>% 
+  group_by(scenario, type, def, dop, distances) %>% 
+  summarise(mean_harm = mean(harm), 
+            mean_imm = mean(immoral), 
+            mean_unex = mean(unexpected)) 
+
+# Create a set of colors 
+
+types_color <- qualitative_hcl(5, palette = "Dark 3")
+
+# Plot including all scenarios 
+
+dsl %>% 
+  ggplot(aes(x = distances, y = mean_imm, col = type)) + 
+  geom_point() +
+  scale_color_manual(values = types_color) + 
+  geom_text(aes(label = scenario), hjust = 0, show.legend = F) + 
+  geom_smooth(inherit.aes = F, aes(x = distances, y = mean_imm), data = dsl, method = "lm", alpha = 0.2) + theme(legend.position = "bottom") +
+  labs(x = "Distance from prototype", 
+       y = "Average Immorality", 
+       title = "Immorality explained by distance from the prototype")
+
+# Plot exluding the purity scenarios 
+
+dsl %>% 
+  filter(type != 'purity') %>% 
+  ggplot(aes(x = distances, y = mean_imm, col = type)) + 
+  geom_point() +
+  scale_color_manual(values = types_color) + 
+  geom_text(aes(label = scenario), hjust = 0, show.legend = F) + 
+  geom_smooth(inherit.aes = F, aes(x = distances, y = mean_imm), method = "lm", alpha = 0.2) + theme(legend.position = "bottom") +
+  labs(x = "Distance from prototype", 
+       y = "Average Immorality", 
+       title = "Immorality explained by distance from the prototype", 
+       subtitle = "Excluding purity")
+  
+```
+
+We see an interesting pattern here. In the plot that includes all scenarios, there seems to be no relationship between average immorality and distance from the prototype. When we exclude purity, however, the relationship becomes negative, as we would have expected. This is encouraging because it resonates with Kurt's theory. As *most* trangressions move away from the template of the moral dyad, they become less immoral.
+
+Nonetheless, there is an issue here: including the object's potency in our calculations of distance could be misleading. As our previous analysis shows that increases in the object's potency lead to decreases in the event's severity. In this calculation, then, we are wrongly "penalizing" the scenarios that have more vulnerable patients than the one that features in our prototype - i.e. person -, which is fairly neutral. For that reason, I am going to calculate distance from the prototype, only considering the behavior's evaluation and potency. 
+
+Let's adjust the function and calculate the new distances: 
+
+```{r}
+
+# Create new function
+
+distance_two <- function( be, bp) { 
+  
+   # Formula   
+  
+  distance <- sqrt(((-4.26) - be)^2 + (1.95 - bp)^2)
+  
+  return(as.double(distance))
+}
+
+# Select the three axes we are interested in 
+
+events_values_2 <- events_def %>% 
+  select(scenario, be, bp)
+
+# Create empty vector for the distances of all 25 events 
+
+distances_2 <- rep(0, 25)
+
+# Loop for creating all 25 values 
+
+for (i in 1:25) {
+  
+d <- distance_two( 
+          be = events_values_2[i, 2], 
+          bp = events_values_2[i, 3])
+  distances_2[[i]] <- d
+}
+
+# Column-bind the values to the events dataframe 
+
+events_values_2 <- events_values_2 %>% 
+  cbind(distances_2) %>% 
+  select(scenario, distances_2)
+
+
+# Join values with the long dataset 
+
+d_long_two <- d_long %>% 
+  left_join(events_values_2, by = "scenario")
+
+# create mean measures from the long dataset
+
+dsl_two <- d_long_two %>% 
+  group_by(scenario, type, def, dop, distances_2) %>% 
+  summarise(mean_harm = mean(harm), 
+            mean_imm = mean(immoral), 
+            mean_unex = mean(unexpected))
+
+```
+
+Now, we can create the second set of summary plots: 
+
+```{r}
+
+# Create a set of colors 
+
+types_color <- qualitative_hcl(5, palette = "Dark 3")
+
+# Plot including all scenarios 
+
+dsl_two %>% 
+  ggplot(aes(x = distances_2, y = mean_imm, col = type)) + 
+  geom_point() +
+  scale_color_manual(values = types_color) + 
+  geom_text(aes(label = scenario), hjust = 0, show.legend = F) + 
+  geom_smooth(inherit.aes = F, aes(x = distances_2, y = mean_imm), data = dsl, method = "lm", alpha = 0.2) + theme(legend.position = "bottom") +
+  labs(x = "Distance from prototype", 
+       y = "Average Immorality", 
+       title  = "Immorality explained by distance from the prototype", 
+       subtitle = "2-D distance")
+
+# Plot exluding the purity scenarios 
+
+dsl_two %>% 
+  filter(type != 'purity') %>% 
+  ggplot(aes(x = distances_2, y = mean_imm, col = type)) + 
+  geom_point() +
+  scale_color_manual(values = types_color) + 
+  geom_text(aes(label = scenario), hjust = 0, show.legend = F) + 
+  geom_smooth(inherit.aes = F, aes(x = distances_2, y = mean_imm), method = "lm", alpha = 0.2) + theme(legend.position = "bottom") +
+  labs(x = "Distance from prototype", 
+       y = "Average Immorality", 
+       title  = "Immorality explained by distance from the prototype", 
+       subtitle = "Excluding purity and using 2-D distance")
+
+```
+
+The relationships are very similar to the ones above. When purity trangressions are excluded, distance from the prototype has a negative relationship with average immorality. Again, this echoes the predictions of the theory of dyadic morality. 
+
+## Differential Attribution of Harm
+
+It is important to remember that if we conduct the reaction-time study, we would not necessarily be interested in the relationship between reaction time and severity (although we certainly will explore it). The argument is rather that distance from the prototype will be negatively related to reaction time. It is not, then, that events that are far away from the template are less severe - although that is probably the case - but that attributing harm and immorality to them is more cognitively difficult. This would help explain why we are fascinated by 'purity' trangressions, and perhaps why groups have found it necessary to construct such elaborate rules around them. 

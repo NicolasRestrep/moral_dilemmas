@@ -1,0 +1,374 @@
+---
+title: "Covering the Semantic Space"
+author: "Nicolas Restrepo"
+date: "12/10/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = F, warning = F)
+```
+
+```{r}
+# Load in the packages 
+library(tidyverse)
+library(haven)
+library(readxl)
+library(plotly)
+library(kableExtra)
+theme_set(theme_light())
+```
+
+## A principled way of approaching semantic variation
+
+One of the challenges, at this point, is to come up with a way to explore the semantic differences between the events in a systematic way. A possible way to do this is to pick one scenario per foundation and systematically vary the components in which we are most interested. Our previous analyses suggest that we should focus on variations on the behavior's evaluation and the object's potency. We could explore movements along these axes by creating five iterations of the same action. Let's say we pick the event: 
+
+- A person dates (2.24, 1.53, 0.75) their cousin.
+
+To explore variations in the behavior, we create a similar (but much more positive example): 
+- A person makes love to (3.14, 2.79, 1.08) their cousin. 
+
+And a similar but more negative one: 
+
+- A person has an affair with (-3.26, 0.61, 0.11)
+
+Now, to explore variations in the object's potency we can add modifiers to the word cousin. 
+
+- A person dates their shy cousin (0.26  -0.59  -0.62)
+
+- A person dates their outgoing cousin (1.61 0.92 1.57)
+
+For this trangression, then, we would have a total of 5 scenarios: the baseline, the two behaviors modifications, and the two object modifications. If we extend this logic to the other four foundations, we end up with 25 events. Here, I will provide a preliminary list of events and will plot them in a three-dimensional space to visualize how well they cover it. 
+
+I need to begin by creating the new subdictionary using the ACT repositories. 
+
+```{r equations}
+
+#load equation information from Interact
+equation <- read_table("equation info.txt", col_names = FALSE)
+equation<- as.data.frame(equation) #put in better format
+
+#label according to what term the coefficients correspond to
+colnames(equation) <- c("Term", "Aep", "App", "Aap", "Bep", "Bpp", "Bap", "Oep", "Opp", "Oap")
+rownames(equation) <- c("Constant", "Aeb", "Apb", "Aab", "Beb", "Bpb", "Bab", "Oeb", "Opb", "Oab",
+                        "AeBe", "AeOp", "ApBp", "AaBa", "BeOe", "BeOp", "BpOe", "BpOp", "AeBeOe",
+                        "AeBeOp")
+
+#get rid of the Z000 column
+equation <- equation[,-1]
+
+#writing function
+eventcalc <- function(actor, beh, object) {
+  
+  #make empty matrix to store info
+  store <- matrix(NA, 20, 1)
+  
+  #something that won't affect the constant
+  store[1,] <- 1
+  
+  #setting actor EPA values
+  store[2,] <- subdictionary$E[subdictionary$term == actor] #Ae
+  store[3,] <- subdictionary$P[subdictionary$term == actor] #Ap
+  store[4,] <- subdictionary$A[subdictionary$term == actor] #Aa
+  
+  #setting subdictionary EPA values
+  store[5,] <- subdictionary$E[subdictionary$term == beh] #Be
+  store[6,] <- subdictionary$P[subdictionary$term == beh] #Bp
+  store[7,] <- subdictionary$A[subdictionary$term == beh] #Ba
+  
+  #setting object EPA values
+  store[8,] <- subdictionary$E[subdictionary$term == object] #Oe
+  store[9,] <- subdictionary$P[subdictionary$term == object] #Op
+  store[10,] <- subdictionary$A[subdictionary$term == object] #Oa
+  
+  store[11,] <- store[2,] * store[5,] #Ae*Be
+  store[12,] <- store[2,] * store[9,] #Ae*Op
+  store[13,] <- store[3,] * store[6,] #Ap*Bp
+  store[14,] <- store[4,] * store[7,] #Aa*Ba
+  store[15,] <- store[5,] * store[8,] #Be*Oe
+  store[16,] <- store[5,] * store[9,] #Be*Op
+  store[17,] <- store[6,] * store[8,] #Bp*Oe
+  store[18,] <- store[6,] * store[9,] #Bp*Op
+  store[19,] <- store[2,] * store[5,] * store[8,] #Ae*Be*Oe
+  store[20,] <- store[2,] * store[5,] * store[9,] #Ae*Be*Op
+  
+  #to store the EPA values for actor, subdictionary, and object after situation
+  postepa <- matrix(NA, 20, 9)
+  
+  #apply function 
+  i<- 1
+  for(i in 1:9) {
+    postepa[,i] <- equation[,i]*store
+    i+1
+  }
+  
+  #put in better data format
+  postepa <- as.data.frame(postepa)
+  
+  postepa <- apply(postepa, 2, sum) #get the sum of the equation to get the actual EPA values
+  postepa <- cbind(store[2:10], postepa) #put the initial EPA and post EPA in df together
+  
+  #calculate deflection
+  deflection <- apply(postepa, 1, diff) #get difference b/w pre and post EPA
+  deflection <- as.data.frame(deflection)
+  deflection <- sapply(deflection, function(x) x^2) #sq differences
+  deflection <- apply(deflection, 2, sum) #sum squared differences :) 
+  return(deflection)
+}
+
+#load equation information from Interact
+equation <- read_table("equation info.txt", col_names = FALSE)
+equation<- as.data.frame(equation) #put in better format
+
+#label according to what term the coefficients correspond to
+colnames(equation) <- c("Term", "Aep", "App", "Aap", "Bep", "Bpp", "Bap", "Oep", "Opp", "Oap")
+rownames(equation) <- c("Constant", "Aeb", "Apb", "Aab", "Beb", "Bpb", "Bab", "Oeb", "Opb", "Oab",
+                        "AeBe", "AeOp", "ApBp", "AaBa", "BeOe", "BeOp", "BpOe", "BpOp", "AeBeOe",
+                        "AeBeOp")
+
+#get rid of the Z000 column
+equation <- equation[,-1]
+
+#writing function
+post_calc <- function(actor, beh, object) {
+  
+  #make empty matrix to store info
+  store <- matrix(NA, 20, 1)
+  
+  #something that won't affect the constant
+  store[1,] <- 1
+  
+  #setting actor EPA values
+  store[2,] <- subdictionary$E[subdictionary$term == actor] #Ae
+  store[3,] <- subdictionary$P[subdictionary$term == actor] #Ap
+  store[4,] <- subdictionary$A[subdictionary$term == actor] #Aa
+  
+  #setting subdictionary EPA values
+  store[5,] <- subdictionary$E[subdictionary$term == beh] #Be
+  store[6,] <- subdictionary$P[subdictionary$term == beh] #Bp
+  store[7,] <- subdictionary$A[subdictionary$term == beh] #Ba
+  
+  #setting object EPA values
+  store[8,] <- subdictionary$E[subdictionary$term == object] #Oe
+  store[9,] <- subdictionary$P[subdictionary$term == object] #Op
+  store[10,] <- subdictionary$A[subdictionary$term == object] #Oa
+  
+  store[11,] <- store[2,] * store[5,] #Ae*Be
+  store[12,] <- store[2,] * store[9,] #Ae*Op
+  store[13,] <- store[3,] * store[6,] #Ap*Bp
+  store[14,] <- store[4,] * store[7,] #Aa*Ba
+  store[15,] <- store[5,] * store[8,] #Be*Oe
+  store[16,] <- store[5,] * store[9,] #Be*Op
+  store[17,] <- store[6,] * store[8,] #Bp*Oe
+  store[18,] <- store[6,] * store[9,] #Bp*Op
+  store[19,] <- store[2,] * store[5,] * store[8,] #Ae*Be*Oe
+  store[20,] <- store[2,] * store[5,] * store[9,] #Ae*Be*Op
+  
+  #to store the EPA values for actor, subdictionary, and object after situation
+  postepa <- matrix(NA, 20, 9)
+  
+  #apply function 
+  i<- 1
+  for(i in 1:9) {
+    postepa[,i] <- equation[,i]*store
+    i+1
+  }
+  
+  #put in better data format
+  postepa <- as.data.frame(postepa)
+  postepa <- apply(postepa, 2, sum) #get the sum of the equation to get the actual EPA values
+   #postepa <- cbind(store[2:10], postepa) #put the initial EPA and post EPA in df together
+  return(postepa)
+}
+
+```
+
+```{r}
+
+# Load in the dictionary
+dictionary <- read_csv("data/FullSurveyorUSMeans.csv")
+
+# Select the columns that we are interested in 
+subdictionary <- dictionary %>% 
+  select(c(1:4, 11),)
+
+# Now load in our new translations 
+translations <- read_excel("data/explore_translations.xlsx")
+
+# Get rid of redundant words in the subdictionary
+
+subdictionary <- subdictionary[-c(121,164, 518, 563, 1026, 2030, 2176), ]
+
+# Add the composite identities to the subdictionary 
+
+new_identities <- read_excel("data/explore_identities.xlsx") 
+
+new_identities <- new_identities %>% 
+  rename(term = Term)
+
+subdictionary <- bind_rows(subdictionary, new_identities)
+
+```
+
+Now, we are in a position to actually create the dictionary. This requires a fair amount of data wrangling. First, I want to get the EPA values for each of the terms. This is a bit tricky because we want it to be in wide format but that makes it difficult, given the state the data is in right now. 
+
+```{r}
+
+# Transform translations from long to wide
+temp <- translations %>% 
+  select(-type) %>% 
+  gather() %>% 
+  rename(term = value)
+
+# Delete the term Type from the dictionary
+sub_t <- subdictionary %>% 
+  select(- Type) 
+
+# Join both datasets
+temp <- temp %>% 
+  inner_join(sub_t, by = "term")
+
+# Temporary dataset for the actors
+temp_actor <- temp %>% 
+  filter(key == "actor") %>% 
+  rename( AE = E, 
+          AP = P, 
+          AA = A) %>% 
+  select(-key)
+
+# Add actors to our previous information
+t1 <-  translations %>% 
+  cbind(temp_actor) %>% 
+  select(-term)
+
+# Temporary data for behavior 
+temp_beh <- temp %>% 
+  filter(key == "behavior") %>% 
+  rename( BE = E, 
+          BP = P, 
+          BA = A) %>% 
+  select(-key)
+
+# Add behavior to our previous information
+t2 <-  t1 %>% 
+  cbind(temp_beh) %>% 
+  select(-term)
+
+# Temporary data for object 
+temp_ob <- temp %>% 
+  filter(key == "object") %>% 
+  rename( OE = E, 
+          OP = P, 
+          OA = A) %>% 
+  select(-key)
+
+# Add object data 
+trans <- t2 %>% 
+  cbind(temp_ob) %>% 
+  select(-term)
+```
+
+Now what we need to do is get the data for the post EPAs in. 
+
+```{r}
+# First transpose the translations data
+
+trans_temp <- trans %>% 
+  select(2:4)
+
+# Now use the second function to calculate post EPAs
+trans_temp <- trans_temp %>%
+  mutate(copyactor = actor, copybeh = behavior, copyobject = object) %>%
+  nest(copyactor, copybeh, copyobject) %>%
+  mutate(data = map(data, ~post_calc(.x$copyactor, .x$copybeh, .x$copyobject))) %>% 
+  tidyr::unnest(data)
+
+# Create tibble for terms 
+terms <- tibble(rep (c("pAe", "pAp", "pAa", "pBe", "pBp", "pBa", "pOe", "pOp", "pOa"), 25)) %>% 
+rename(term = `rep(...)`)
+
+# Join both dataframes
+trans_temp <- trans_temp %>% 
+  rename(value = data) %>% 
+  cbind(terms) %>% 
+  mutate(term = factor(term, levels = c("pAe", "pAp", "pAa", "pBe", "pBp", "pBa", "pOe", "pOp", "pOa")))
+
+# Now spread 
+
+trans_temp <- trans_temp %>% 
+  pivot_wider(values_from = value, names_from = term) 
+
+
+```
+
+Now we want to join both datasets 
+
+```{r}
+
+full_translations <- left_join(trans, trans_temp) 
+
+names(full_translations) <- tolower(names(full_translations))
+
+```
+
+We also want to calculate the deflections
+
+```{r}
+
+selected_events <- full_translations %>% 
+        mutate(actor = as.character(actor),
+               object = as.character(object), 
+               behavior = as.character(behavior)) %>% 
+  rowwise %>% 
+         mutate(def = eventcalc(actor, behavior, object))
+```
+
+Lastly, let me get the individual differences 
+
+```{r}
+selected_events <- selected_events %>% 
+  mutate(dae = pae - ae, 
+         daa = paa - aa, 
+         dap = pap - ap, 
+         dbe = pbe - be, 
+         dbp = pbp - bp, 
+         dba = pba - ba, 
+         doe = poe - oe, 
+         dop = pop - op, 
+         doa = poa - oa)
+```
+
+Let's save the file and print a list of the events.  
+
+```{r}
+
+write_csv(selected_events, "data/exploratory_events.csv")
+
+selected_events %>% 
+  select(1:13) %>% 
+  kable() %>% 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+```
+
+We are ready to create the plot. As we have been doing, I am going to create a three dimensional plot where the axes are the behavior's potency, the behavior's evaluation, and the object's potency. The goal is to see a considerable are of the space covered. 
+
+```{r}
+
+# Create a column with the scenario 
+
+selected_events <- selected_events %>% 
+  mutate(scenario = paste(actor, behavior, object, sep = " "))
+
+# Create the plot
+p <- plot_ly(selected_events, x = ~be, y = ~bp, z = ~op, color = ~type, 
+             marker = list(symbol = 'circle'), 
+             text = ~paste('Scenario: ', scenario)) %>% 
+            layout(title = "Semantic Structures of Moral Wrongs", 
+                   scene = list(xaxis = list(title = 'Behavior Evaluation'),
+                                yaxis = list(title = 'Behavior Potency'),
+                                zaxis = list(title = 'Object Potency')))
+p
+```
+
+The spread here does look more systematic than what we previously had. There are some limitations: it is difficult to significantly increase the potency of "spouse" and to significantly decrease the potency of "child". I will keep looking for better alternatives. 

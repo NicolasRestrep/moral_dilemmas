@@ -1,0 +1,77 @@
+---
+title: "Moral Scenarios and Affect Control Theory"
+author: "Nicolas Restrepo"
+date: "September 6, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = F)
+```
+
+
+```{r}
+
+library(tidyverse)
+library(readxl)
+library(stringr)
+theme_set(theme_bw())
+```
+
+## Preliminary Analysis 
+
+Load in the data 
+
+```{r}
+
+# Load the dataset 
+
+moral_events <- read_csv("moral_events.csv")
+
+```
+
+Are there types of moral scenarios that are more deflecting than others? 
+
+```{r}
+
+mean_def <- moral_events %>% 
+  group_by(type) %>% 
+  summarize( mean_deflection = mean(def), 
+             sd_deflection = sd(def), 
+             upper = mean_deflection + 1.96*sd_deflection, 
+             lower = mean_deflection - 1.96*sd_deflection)
+
+mean_def %>% 
+  ggplot(aes(x = reorder(type, mean_deflection), y = mean_deflection, ymin = lower, ymax = upper)) + 
+  geom_point() + 
+  geom_pointrange() + 
+  coord_flip() + 
+  labs( title = "Average deflection in each category", 
+        x = "", 
+        y = "Average Deflection")
+```
+
+There is not much that can be inferred from this. It is just immediately interesting how deflection is a very good predictor of the "wrongness" of harm but a terrible predictor of the "wrongness" of purity. 
+
+What about the situations themselves? 
+
+```{r}
+
+moral_events <- moral_events %>% 
+  mutate(event = paste(actor, behavior, object, sep = " ")) %>% 
+  filter(type != "liberty")
+
+moral_events %>% 
+  ggplot(aes(x = reorder(event, def), y = def)) + 
+  geom_point() + 
+  coord_flip() + 
+  facet_grid(type ~ . , scales = "free_y", space = "free") +
+  labs(title = "Deflection of the Moral Scenarios", 
+       y = " ", 
+       x = "") + 
+  theme(legend.position = "none") +
+  theme_minimal(base_size = 10) 
+```
+
+This is quite incredible. Deflection is a good measure of harm and authority, because those features are built into the equations. However, it cannot account for the wrongness of situations such as incest or pedophilia. 
+

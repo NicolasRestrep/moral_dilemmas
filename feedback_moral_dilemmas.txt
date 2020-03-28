@@ -1,0 +1,18 @@
+Summary of Feedback
+
+--- Lisa --- 
+
+Lisa has three main points. She focuses on the clarity of the question, ACT's role in the analysis, and in the regressions themselves. Let's look at them more closely: 
+
+1) Clarity of the question: this is perhaps the most important piece of feedback here. The question is not clear, especially for people who are not familiar with debates about morality and cognition. I need to be more specific about the question I am trying to answer; this should be readily recognizable to anyone reading the text. This implies working more on the front end, making the framing a lot more specific. I need to sit down and think more carefully how I want to structure my ideas, and how I want to lay out the argument I want to construct. 
+
+Next actions: read DTM's take on prototypical cognition. Read more sociological takes on prototypes. Read Martin on EPAs. Once you have done this, try to present a more coherent and clear framing of the analysis. 
+
+2) Role of ACT: you have moved away from ACT, but your analyses have not. You need to make sure it is clear that you are only using ACT as a vehicle for understanding semantic meanings - It provides repositories of knowledge. How can I construct the argument in a way that moves away from the theoretical claims of ACT so that we are not stuck on that uninteresting debate. 
+
+Next actions: consider whether it is worth talking about change in potency of the object. Think about how to present ACT in the front end. Analyze how Mary Beth did it in her own analysis. 
+
+3) Regression and covariates: try running the regressions with more controls. Specifically, try to show that the simple models are more accurate. In general, this is a broader point about the presentation of your results, which ties into the feedback above. Here you need to move away from ACT, towards what you actually want to say. 
+
+
+
