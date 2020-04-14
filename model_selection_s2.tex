@@ -1,0 +1,234 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={Methodological Supplement Study 2},
+            pdfauthor={Nicolas Restrepo},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{graphicx}
+% grffile has become a legacy package: https://ctan.org/pkg/grffile
+\IfFileExists{grffile.sty}{%
+\usepackage{grffile}
+}{}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\providecommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+
+  \title{Methodological Supplement Study 2}
+    \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+    \author{Nicolas Restrepo}
+    \preauthor{\centering\large\emph}
+  \postauthor{\par}
+      \predate{\centering\large\emph}
+  \postdate{\par}
+    \date{4/2/2020}
+
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+
+\begin{document}
+\maketitle
+
+\hypertarget{model-selection}{%
+\subsection{Model Selection}\label{model-selection}}
+
+Here, I am going to go through the specifications of the models I fitted
+and to show the reasoning behind my model selection. To answer this
+question, I fitted three different models. In all of them, the outcome
+variable is the time it took participants to classify an event as
+harmful or harmless. The main independent variable is Euclidean distance
+from the prototypical moral wrong and I control for the length of the
+statement and its readability (using the Felsch Kincaid index). All
+models are multi-level, cross-classified models, including varying
+intercepts for respondents and scenarios. The main difference is how the
+term for distance from the prototype is expressed: the first model
+includes only a linear term; the second expresses the relationship in a
+quadratic manner; and the third describes the relationship
+logarithmically.
+
+Here, I will print the results of all three models:
+
+Next, I compare the WAIC values of each of the specifications:
+
+The comparison shows that the quadratic model is preferable, but only by
+a slight margin. The implication is that information criteria cannot be
+our only tool for discerning which model is more appropriate. We need to
+rely on more theoretically informed criteria. This is why I base my
+decision partly on the relationship between reaction time and proportion
+of harmfulness that is shown in the main body of the paper.
+
+\hypertarget{model-excluding-purity-scenarios}{%
+\subsection{Model excluding purity
+scenarios}\label{model-excluding-purity-scenarios}}
+
+One of the concerns of the analaysis above is that the quadratic
+relationship is mainly driven by the so-called purity violations. Here,
+I fit the quadratic model without these datapoints to show that the
+relationship still holds. The coefficients of the model are the
+following:
+
+~
+
+reaction time harm
+
+Predictors
+
+Estimates
+
+CI
+
+p
+
+(Intercept)
+
+0.18
+
+0.05~--~0.31
+
+0.006
+
+distances\_prot
+
+0.16
+
+0.07~--~0.26
+
+0.001
+
+distances\_prot\^{}2
+
+-0.13
+
+-0.22~--~-0.03
+
+0.008
+
+length
+
+0.17
+
+0.04~--~0.29
+
+0.008
+
+readibility\_indices
+
+-0.08
+
+-0.19~--~0.04
+
+0.195
+
+Random Effects
+
+σ2
+
+0.71
+
+τ00 ids
+
+0.25
+
+τ00 scenario
+
+0.03
+
+ICC
+
+0.28
+
+N ids
+
+184
+
+N scenario
+
+20
+
+Observations
+
+3680
+
+Marginal R2 / Conditional R2
+
+0.053 / 0.318
+
+
+\end{document}

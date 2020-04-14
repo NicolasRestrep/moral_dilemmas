@@ -1,0 +1,36 @@
+---
+title: "Descriptive Statistics"
+author: "Nicolas Restrepo"
+date: "4/3/2020"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(tidyverse)
+```
+
+## Study 1 
+
+Here, I present figures showing the distribution of the data collected in study one. Here, are the ratings for the immorality of scenarios, their harmfulness, and their unexpectedness: 
+
+![](immorality_summary.png){height=100%}
+
+![](harm_summary.png)
+
+![](unexpected_summary.png){height=100%}
+
+## Study 2 
+
+Next, I present the descriptive plots for the reaction time data collected in Study 2. 
+
+![](s2_summary_imm.png){width=90%}
+
+![](s2_summary_harm.png){width=90%}
+

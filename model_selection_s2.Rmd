@@ -1,0 +1,501 @@
+---
+title: "Methodological Supplement Study 2"
+author: "Nicolas Restrepo"
+date: "4/2/2020"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F, warning = F, message = F, fig.align='center')
+```
+
+```{r, include=FALSE}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(ggrepel)
+library(gridExtra)
+library(haven)
+library(lavaan)
+library(lme4)
+library(nlme)
+library(stargazer)
+library(broom)
+library(psych)
+library(brms)
+library(plotly)
+library(sjPlot)
+library(corrplot)
+library(ggdag)
+library(quanteda)
+theme_set(theme_light())
+```
+
+```{r, include=FALSE}
+
+# Load in conservative data
+rt_conservative <- read_csv("rt_conservative_February 10, 2020_10.42.csv")
+
+# Load in liberal data 
+rt_liberal <- read_csv("rt_liberal.csv")
+
+# Delete unnecessary rows 
+rt_conservative <- rt_conservative[-(1:2),]
+rt_liberal <- rt_liberal[-(1:2),]
+
+# How many people passed the attention checks?
+rt_conservative <- rt_conservative %>% 
+  mutate(passed = if_else(att_1 == "Harmless (K)" & att_2 == "Immoral (J)" & att_3 == "Harmful (J)", 1, 0)) 
+
+rt_conservative %>% 
+  group_by(passed) %>% 
+  summarise(n())
+
+rt_liberal <- rt_liberal %>% 
+  mutate(passed = if_else(att_1 == "Harmless (K)" & att_2 == "Immoral (J)" & att_3 == "Harmful (J)", 1, 0)) 
+
+rt_liberal %>% 
+  group_by(passed) %>% 
+  summarise(n()) 
+
+# Join both datasets 
+data <- rbind(rt_liberal, rt_conservative)
+
+# Filter people who did not pass
+data <- data %>% 
+  filter(passed == 1)
+
+# Now let's turn this into a long dataframe 
+
+# Create a manageable wide dataframe 
+
+rtw <- data %>% 
+  select(ends_with("Page Submit"), i_phc, i_pkp, i_tmdp, i_adr, i_elb, 
+         i_acr, i_jbd, i_scc, i_ddf, i_git, i_idb, i_ayc, i_sip, i_ecc, 
+         i_ccr, i_mbr, i_msn, i_mbw, i_php, i_mmc, i_mmls, i_msas, i_mpsa, i_whh, i_thls, h_phc, h_pkp, h_tmdp, h_adr, h_elb, 
+         h_acr, h_jbd, h_scc, h_ddf, h_git, h_idb, h_ayc, h_sip, h_ecc, 
+         h_ccr, h_mbr, h_msn, h_mbw, h_php, h_mmc, h_mmls, h_msas, h_mpsa, h_whh, h_thls) %>% 
+  mutate(ids = 1:184) %>% 
+  select(ids, everything())
+
+
+# Create a long dataframe for harm and reaction time
+
+d_long_harm_rt <- rtw %>% 
+  select(ids, starts_with("h_")) %>% 
+  pivot_longer(2:26, names_to = "scenario", values_to = "reaction_time_harm") %>% 
+  select(ids, scenario, reaction_time_harm) %>% 
+  mutate(scenario = str_remove(scenario, "_t_Page Submit$")) %>% 
+  mutate(scenario = str_remove(scenario, "^h_"))
+
+# Create a long dataframe for is_harm
+
+d_long_harm_bin <- rtw %>% 
+  select(ids, starts_with("h_")) %>% 
+  pivot_longer(27:51, names_to = "scenario", values_to = "is_harmful") %>% 
+  select(ids, scenario, is_harmful) %>% 
+  mutate(scenario = str_remove(scenario, "^h_"))
+
+d_long_harm <- left_join(d_long_harm_rt, d_long_harm_bin, by = c('ids', "scenario"))
+
+# Create a long dataframe for immorality and reaction time 
+
+d_long_imm_rt <- rtw %>% 
+  select(ids, starts_with("i_")) %>% 
+  pivot_longer(2:26, names_to = "scenario", values_to = "reaction_time_imm") %>% 
+  select(ids, scenario, reaction_time_imm) %>% 
+  mutate(scenario = str_remove(scenario, "_t_Page Submit$")) %>% 
+  mutate(scenario = str_remove(scenario, "^i_"))
+
+# Create a long dataframe for immorality and is_immoral
+
+d_long_imm_bin <- rtw %>% 
+  select(ids, starts_with("i_")) %>% 
+  pivot_longer(27:51, names_to = "scenario", values_to = "is_immoral") %>% 
+  select(ids, scenario, is_immoral) %>% 
+  mutate(scenario = str_remove(scenario, "^i_"))
+
+d_long_imm <- left_join(d_long_imm_rt, d_long_imm_bin, by = c('ids', 'scenario'))
+
+# Now join them 
+
+d_long <- left_join(d_long_harm, d_long_imm, by = c('ids', 'scenario')) %>% 
+  mutate_at(c('reaction_time_harm', 'reaction_time_imm'), as.numeric)
+
+
+# Let's get some information about the events in there 
+
+# Load dataset with the deflections 
+
+selected_events <- read_csv("data/full_events.csv")
+
+# Create column for abreviations 
+
+events <- c("phc", 
+            "pkp", 
+            "tmdp", 
+            "adr", 
+            "elb", 
+            "acr", 
+            "jbd", 
+            "scc", 
+            "ddf", 
+            "git", 
+            "idb", 
+            "ayc", 
+            "sip", 
+            "ecc", 
+            "ccr", 
+            "mbr", 
+            "msn", 
+            "mbw", 
+            "php", 
+            "mmc", 
+            "mmls", 
+            "msas", 
+            "mpsa", 
+            "whh", 
+            "thls")
+
+# Create new column 
+
+events_def <- selected_events %>% 
+  mutate(scenario = events) %>% 
+  select(scenario, def, type, 5:33)
+
+# Add to long dataset 
+
+d_long <- d_long %>% 
+  left_join(events_def, by = "scenario")
+
+# How many weird responses do we have? 
+
+sum(d_long$reaction_time_harm < 1)
+sum(d_long$reaction_time_imm < 1)
+sum(d_long$reaction_time_harm > 10)
+sum(d_long$reaction_time_imm > 10)
+
+# There are 66 responses that don't seem valid. Let's replace them with the median imputation 
+# First I need to calculate the median for the scenarios 
+
+median_rt <- d_long %>% 
+  group_by(scenario) %>% 
+  summarise(med_imm = median(reaction_time_imm), 
+            med_harm = median(reaction_time_harm))
+
+# Function for replacing immorality values 
+
+replace_imm <- function(x) {
+  
+ss <- d_long[x, 2] %>% 
+  as.vector() %>% 
+  as.character()
+
+i_scenario <- median_rt %>% 
+  filter(str_detect(scenario, ss)) %>% 
+  select(med_imm) %>% 
+  as.numeric() %>% 
+  as.vector()
+
+d_long[x, 5] <<- i_scenario
+
+}
+
+# Function for replacing harm values 
+
+replace_harm <- function(x) {
+  
+ss <- d_long[x, 2] %>% 
+  as.vector() %>% 
+  as.character()
+
+h_scenario <- median_rt %>% 
+  filter(str_detect(scenario, ss)) %>% 
+  select(med_harm) %>% 
+  as.numeric() %>% 
+  as.vector()
+
+d_long[x, 3] <<- h_scenario
+
+}
+
+# Map all small immorality values 
+smaller_imm <- which(d_long$reaction_time_imm < 1)
+
+map(.x = smaller_imm, .f = replace_imm)
+
+# Map all small harm values 
+smaller_harm <- which(d_long$reaction_time_harm < 1)
+
+map(.x = smaller_harm, .f = replace_harm)
+
+# Map all big immorality values 
+large_imm <- which(d_long$reaction_time_imm > 10)
+
+map(.x = large_imm, .f = replace_imm)
+
+# Map all large harm values 
+large_harm <- which(d_long$reaction_time_harm > 10)
+
+map(.x = large_harm, .f = replace_harm)
+
+# Recode variables to binary 
+
+d_long <- d_long %>%  
+  mutate(is_immoral = case_when(is_immoral == "Immoral (J)" ~ 1, 
+                                is_immoral == "Not Immoral (K)" ~ 0), 
+         is_harmful = case_when(is_harmful == "Harmful (J)" ~ 1, 
+                                is_harmful == "Harmless (K)" ~ 0))
+
+# Create a new variable for the variances 
+
+d_long_var <- d_long %>% 
+  group_by(scenario) %>% 
+  summarise(p_harm = mean(is_harmful, na.rm = T), 
+            p_imm = mean(is_immoral, na.rm = T), 
+            v_harm = var(is_harmful, na.rm = T), 
+            v_imm = var(is_immoral, na.rm = T))
+
+# Join back to the long dataframe 
+
+d_long <- left_join(d_long, d_long_var, by = "scenario")
+
+dsl <- d_long %>% 
+  group_by(scenario, type) %>% 
+  summarise(mean_harm = mean(reaction_time_harm), 
+            mean_imm = mean(reaction_time_imm)) %>% 
+  ungroup()
+
+# Name the scenarios with the full length 
+
+dsl <- dsl %>% 
+  mutate(full_string = case_when(scenario == "acr" ~ "An athlete cheats their rival", 
+                                 scenario == "adr" ~ "An athlete deceives the referee", 
+                                 scenario == "ayc" ~ "An athlete yells at their coach", 
+                                 scenario == "ccr" ~ "A coach cheers for the rival", 
+                                 scenario == "ddf" ~ "A daughter disobeys her father", 
+                                 scenario == "ecc" ~ "An employee conspires with a competitor", 
+                                 scenario == "elb" ~ "An employee lies to the boss", 
+                                 scenario == "git" ~ "A girl interrupts her teacher", 
+                                 scenario == "idb" ~ "An intern disobeys their boss", 
+                                 scenario == "jbd" ~ "A judge befriends the defendant", 
+                                 scenario == "mbr" ~ "A man betrays his relative", 
+                                 scenario == "mbw" ~ "A man betrays his wife", 
+                                 scenario == "mmc" ~ "A man marries his cousin", 
+                                 scenario == "mmls" ~ "A man makes love to his sister", 
+                                 scenario == "mpsa" ~ "A married person has sex with an adulterer", 
+                                 scenario == "msas" ~ "A mother sexually arouses her son", 
+                                 scenario == "msn" ~ "A mayor slanders a neighbor", 
+                                 scenario == "phc" ~ "A person hurts a child", 
+                                 scenario == "php" ~ "A person hires a prostitute", 
+                                 scenario == "pkp" ~ "A person kills a person", 
+                                 scenario == "scc" ~ "A student cheats their classmate", 
+                                 scenario == "sip" ~ "A student insults the professor", 
+                                 scenario == "thls" ~ "A teacher hits a lazy student", 
+                                 scenario == "whh" ~ "A wife hits her forgetful husband", 
+                                 scenario == "tmdp" ~ "A teenager mocks a disabled person"))
+
+# Add the short versions again for the plot
+
+dsl <- dsl %>% 
+  mutate(length = str_count(full_string)) 
+
+# Calculate readibility 
+
+readibility_indices <- c(NA, rep = 25)
+
+for (i in 1: 25) {
+  
+  y <- textstat_readability(dsl$full_string[i], measure = "Flesch.Kincaid")
+  readibility_indices[i] <- y$Flesch.Kincaid
+}
+
+# Join with dsl 
+
+dsl <- cbind(dsl, readibility_indices)
+
+# Create function to calculate the euclidean distance in three-dimensional space 
+
+events_values <- events_def %>% 
+  select(scenario, op, be, bp)
+
+eucl_dist_pkp <- function(x) { 
+    op <-  events_values[x, 2] 
+    be <-  events_values[x, 3] 
+    bp <-  events_values[x, 4]
+  
+   # Formula   
+  # The values of the prototype are always the ones the events are compared against
+  distance <- sqrt((0.95 - op)^2 + ((-4.26) - be)^2 + (1.95 - bp)^2)
+   return(as.double(distance))
+}
+
+
+distances_pkp <- map_dbl(1:25, eucl_dist_pkp)
+
+events_values_pkp <- events_values %>% 
+  cbind(distances_pkp) %>% 
+  select(scenario, distances_pkp)
+
+# Join values with the long dataset 
+
+dsl <- dsl %>% 
+  left_join(events_values_pkp, by = "scenario")
+
+# Create new function with Person hurts child as the prototype 
+
+eucl_dist_phc <- function(x) { 
+    op <-  events_values[x, 2] 
+    be <-  events_values[x, 3] 
+    bp <-  events_values[x, 4]
+  
+   # Formula   
+  # The values of the prototype are always the ones the events are compared against
+  distance <- sqrt(((-1.14) - op)^2 + ((-3.17) - be)^2 + (1.06 - bp)^2)
+   return(as.double(distance))
+}
+
+
+distances_phc <- map_dbl(1:25, eucl_dist_phc)
+
+events_values_phc <- events_values %>% 
+  cbind(distances_phc) %>% 
+  select(scenario, distances_phc)
+
+# Join values with the long dataset 
+
+dsl <- dsl %>% 
+  left_join(events_values_phc, by = "scenario")
+
+# Create new function with Person hurts child as the prototype 
+
+eucl_dist_prot <- function(x) { 
+  op <-  events_values[x, 2] 
+  be <-  events_values[x, 3] 
+  bp <-  events_values[x, 4]
+  
+  # Formula   
+  # The values of the prototype are always the ones the events are compared against
+  distance <- sqrt(((-1.14) - op)^2 + ((-4.26) - be)^2 + (1.95 - bp)^2)
+  return(as.double(distance))
+}
+
+
+distances_prot <- map_dbl(1:25, eucl_dist_prot)
+
+events_values_prot <- events_values %>% 
+  cbind(distances_prot) %>% 
+  select(scenario, distances_prot)
+
+# Join values with the long dataset 
+
+dsl <- dsl %>% 
+  left_join(events_values_prot, by = "scenario")
+
+lengths <- dsl %>% 
+  select(scenario, length, readibility_indices, distances_phc, distances_pkp, distances_prot)
+
+d_long <- d_long %>% 
+  select(1:16, 36:39) %>% 
+  left_join(lengths, by = "scenario")
+
+# Add one column for the average reaction time of the person 
+
+# Create the averages 
+avg_rt <- d_long %>% 
+  select(ids, reaction_time_harm, reaction_time_imm) %>% 
+  pivot_longer(2:3) %>% 
+  group_by(ids) %>% 
+  summarise(avg_rt = mean(value))
+
+# Add averages to long data 
+
+d_long <- left_join(d_long, avg_rt, by = "ids")
+
+# Add ideological beliefs
+
+data_pol <- data %>% 
+  select(ideology_1) %>% 
+  mutate(ids = 1:184)
+
+d_long <- left_join(d_long, data_pol, by = "ids")
+
+```
+
+## Model Selection
+
+Here, I am going to go through the specifications of the models I fitted and to show the reasoning behind my model selection. To answer this question, I fitted three different models. In all of them, the outcome variable is the time it took participants to classify an event as harmful or harmless. The main independent variable is Euclidean distance from the prototypical moral wrong and I control for the length of the statement and its readability (using the Felsch Kincaid index). All models are multi-level, cross-classified models, including varying intercepts for respondents and scenarios. The main difference is how the term for distance from the prototype is expressed: the first model includes only a linear term; the second expresses the relationship in a quadratic manner; and the third describes the relationship logarithmically. 
+
+Here, I will print the results of all three models: 
+
+```{r, include = F}
+set.seed(34)
+
+d_long_scaled <- d_long %>% 
+  select(ids, reaction_time_harm, distances_prot, length, scenario, readibility_indices, type) %>% 
+  mutate(distance_sqr = distances_prot^2, 
+         distance_log = log(distances_prot)) %>% 
+  mutate_at(c("ids", "scenario"), as.factor) %>% 
+  mutate_if(is.numeric, scale)
+```
+
+```{r, include=F}
+b1 <- brm(formula = reaction_time_harm ~ 1 + distances_prot + length + (1 | ids) + (1 | scenario) + readibility_indices, 
+          iter = 5000, warmup = 1000, chains = 4, cores = 4,  
+          control = list(adapt_delta = 0.95), 
+          family = gaussian, 
+          data = d_long_scaled)
+
+b2 <- update(b1, 
+             formula = reaction_time_harm ~ 1 + distances_prot + I(distances_prot^2) + length + (1 | ids) + (1 | scenario) + readibility_indices, 
+             newdata = d_long_scaled)
+b3 <- update(b1, 
+             formula = reaction_time_harm ~ 1 + distance_log + length + (1 | ids) + (1 | scenario) + readibility_indices, 
+             newdata = d_long_scaled)
+
+b1 <- add_criterion(b1, c("waic", "loo"))
+b2 <- add_criterion(b2, c("waic", "loo"))
+b3 <- add_criterion(b3, c("waic", "loo"))
+
+comparisons <- loo_compare(b1,b2, b3, criterion = "waic")
+model_weights <- model_weights(b1,b2,b3, weights = "loo")
+
+```
+
+```{r}
+print(b1)
+print(b2)
+print(b3)
+```
+
+Next, I compare the WAIC values of each of the specifications:
+
+```{r}
+comparisons %>% 
+  as.tibble(.) %>% 
+  mutate(model = c('quadratic', 
+                   'logarithmic',
+                   'linear')) %>% 
+  select(model, everything()) %>% 
+  mutate_if(is.numeric, ~round(., digits = 2)) %>% 
+  kable(caption = "WAIC comparison") %>% 
+  kable_styling(bootstrap_options = c('striped'))
+```
+
+The comparison shows that the quadratic model is preferable, but only by a slight margin. The implication is that information criteria cannot be our only tool for discerning which model is more appropriate. We need to rely on more theoretically informed criteria. This is why I base my decision partly on the relationship between reaction time and proportion of harmfulness that is shown in the main body of the paper. 
+
+## Model excluding purity scenarios
+
+One of the concerns of the analaysis above is that the quadratic relationship is mainly driven by the so-called purity violations. Here, I fit the quadratic model without these datapoints to show that the relationship still holds. The coefficients of the model are the following: 
+
+```{r}
+
+m <- lmer(reaction_time_harm ~ 1 + distances_prot + I(distances_prot^2) + length + readibility_indices + (1 | ids) + (1 | scenario),
+           data = (d_long_scaled %>% 
+                     filter(type != 'purity')))
+
+tab_model(m)
+```
+

@@ -1,0 +1,301 @@
+---
+title: "Methodological Supplement - Study 1"
+author: "Nicolas Restrepo"
+date: "4/2/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F, warning = F, message = F, fig.align='center')
+```
+
+```{r}
+
+# Model Selection 
+
+# Packages 
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(ggrepel)
+library(gridExtra)
+library(haven)
+library(lavaan)
+library(lme4)
+library(nlme)
+library(stargazer)
+library(broom)
+library(psych)
+library(brms)
+library(plotly)
+library(sjPlot)
+library(plot3D)
+library(scatterplot3d)
+library(quanteda)
+theme_set(theme_light())
+
+# Load in the conservative data
+c_data <- read_csv("data/conservatives_full.csv")
+
+#Get rid of the first 2 rows 
+
+c_data <- c_data[-(1:2), ]
+
+# Load pretest data 
+
+p_data <- read_csv("data/pretest.csv")
+
+p_data <- p_data[-(1:3), ]
+
+# Load the liberal data 
+
+l_data <- read_csv("data/liberals_complete.csv")
+
+l_data <- l_data[-(1:2),]
+
+# Now bind them together 
+
+data <- rbind(c_data, p_data, l_data)
+
+# Get attention checks for the data 
+
+data <- data %>% 
+  mutate(passed_1 = ifelse(ach_1_1 == "extremely harmful", 1, 0), 
+         passed_2 = ifelse(ach_2_1 == "not at all immoral", 1, 0), 
+         passed_3 = ifelse(ach_3_1 == "moderately unexpected", 1, 0), 
+         passed_4 = ifelse(ach_4_1 == "not at all harmful", 1, 0), 
+         passed_5 = ifelse(ach_5_1 == "extremely immoral", 1, 0), 
+         passed_6 = ifelse(ach_6_1 == "extremely unexpected", 1, 0), 
+         sum_pass = passed_1 + passed_2 + passed_3 + passed_4 + passed_5 + passed_6)
+
+# Now drop cases which did not pass the attention checks 
+
+data <- data %>% 
+  filter(sum_pass == 6)
+
+# Create variable that indicates if someone is conservative
+
+data <- data %>% 
+  mutate(conservative = ifelse(ideology_1 == 5 | ideology_1 == 6 | ideology_1 == 7, 1, 0)) 
+
+
+# Mutate all main questions so that we get numbers 
+
+data <- data %>% 
+  mutate_at(vars(contains("_h_1")), funs(recode(., 
+                                   "not at all harmful" = 1, 
+                                   "slightly harmful" = 2, 
+                                   "moderately harmful" = 3, 
+                                   "very harmful" = 4, 
+                                   "extremely harmful" = 5))) %>% 
+  mutate_at(vars(contains("_i_1")), funs(recode(., 
+                                   "not at all immoral" = 1, 
+                                   "slightly immoral" = 2, 
+                                   "moderately immoral" = 3, 
+                                   "very immoral" = 4, 
+                                   "extremely immoral" = 5))) %>% 
+  mutate_at(vars(contains("_u_1")), funs(recode(., 
+                                   "not at all unexpected" = 1, 
+                                   "slightly unexpected" = 2, 
+                                   "moderately unexpected" = 3, 
+                                   "very unexpected" = 4, 
+                                   "extremely unexpected" = 5)))
+
+
+# Get of of the first set of uninformative columns 
+
+d <- data %>% 
+  select(-contains("ach")) %>% 
+  select(pkp_h_1:msas_u_1, ideology_1, conservative, race, gender, income)
+
+# Now let's create a more amenable dataset 
+
+d <- d %>% 
+  mutate(id = 1:n()) %>% 
+  select(id, everything()) 
+
+# Rename all variables 
+numeric_variables <- d %>% 
+  select(-c(gender, race, income)) %>% 
+  colnames()
+
+d <- d %>%  
+  mutate_at(.vars = numeric_variables, as.numeric) %>% 
+  rename_all(
+    funs(str_remove(., "_1"))
+    ) 
+
+
+# Reshape harmful perceptions from wide to long 
+
+d_harm_long <- d %>% 
+  select(id, ideology, conservative, race, gender, income, contains("_h")) %>% 
+  gather(key = "scenario", value = "harm", 7:31) %>% 
+  mutate(scenario = str_remove(scenario, "_h$"))
+
+# Reshape immoral perceptions from wide to long 
+
+d_imm_long <- d %>% 
+  select(id, ideology, conservative, race, gender, income, contains("_i")) %>% 
+  gather(key = "scenario", value = "immoral", 7:31) %>% 
+  mutate(scenario = str_remove(scenario, "_i$"))
+
+# Reshape unexpected perceptions from wide to long 
+
+d_un_long <- d %>% 
+select(id, ideology, conservative, race, gender, income, contains("_u")) %>% 
+  gather(key = "scenario", value = "unexpected", 7:31) %>% 
+  mutate(scenario = str_remove(scenario, "_u$"))
+
+# Now join them 
+
+d_long <- d_harm_long %>% 
+  mutate(immoral = d_imm_long$immoral, 
+         unexpected = d_un_long$unexpected)
+
+# Load dataset with the deflections 
+
+selected_events <- read_csv("data/full_events.csv")
+
+# Create column for abreviations 
+
+events <- c("pch", 
+            "pkp", 
+            "tmdp", 
+            "adr", 
+            "elb", 
+            "acr", 
+            "jbd", 
+            "scc", 
+            "ddf", 
+            "git", 
+            "idb", 
+            "ayc", 
+            "sip", 
+            "ecc", 
+            "ccr", 
+            "mbr", 
+            "msn", 
+            "mbw", 
+            "php", 
+            "mmc", 
+            "mmls", 
+            "msas", 
+            "mpsa", 
+            "whh", 
+            "thls")
+
+# Create new column 
+
+events_def <- selected_events %>% 
+  mutate(scenario = events) %>% 
+  select(scenario, def, type, 5:33)
+
+# Add to long dataset 
+
+d_long <- d_long %>% 
+  left_join(events_def, by = "scenario")
+
+# Create a variable for negative behavior 
+
+d_long <- d_long %>% 
+  mutate(neg_beh = ifelse(be < 0, 1, 0))
+
+
+# create a summary table for the values of each question 
+
+gd <- d %>% 
+  select(-c(id, ideology, conservative, race, gender, income)) %>% 
+  gather(key = "scenario", 
+         value = "score") %>% 
+  group_by(scenario) %>% 
+  summarise_all(funs(med = median(.), avg = mean(.), maximum = max(.), minimum = min(.), st_dv = sd(.), fq = quantile(., 0.25), tq = quantile(., 0.75))) 
+
+gd <- gd %>% 
+  mutate(scenario = str_replace(scenario, "acr", "athlete_cheats_rival"), 
+         scenario = str_replace(scenario, "adr", "athlete_deceives_referee"), 
+         scenario = str_replace(scenario, "ayc", "athlete_yells_at_coach"), 
+         scenario = str_replace(scenario, "ccr", "coach_cheers_rival"), 
+         scenario = str_replace(scenario, "ddf", "daughter_disobeys_father"),
+         scenario = str_replace(scenario, "ecc", "employee_conspires_with_comp."),
+         scenario = str_replace(scenario, "elb", "employee_lies_to_boss"), 
+         scenario = str_replace(scenario, "git", "girl_interrupts_teacher"),
+         scenario = str_replace(scenario, "idb", "intern_disobeys_boss"), 
+         scenario = str_replace(scenario, "jbd", "judge_befriends_defendant"), 
+         scenario = str_replace(scenario, "mbr", "man_betrays_relative"), 
+         scenario = str_replace(scenario, "mbw", "man_betrays_wife"), 
+         scenario = str_replace(scenario, "mmc", "man_marries_cousin"),
+         scenario = str_replace(scenario, "mmls", "man_makes_love_sister"), 
+         scenario = str_replace(scenario, "mpsa", "married_has_sex_adulterer"), 
+         scenario = str_replace(scenario, "msas", "mother_sexually_arouses_son"), 
+         scenario = str_replace(scenario, "msn", "mayor_slanders_neighbor"), 
+         scenario = str_replace(scenario, "pch", "person_hurts_child"), 
+         scenario = str_replace(scenario, "php", "person_hires_prostitute"), 
+         scenario = str_replace(scenario, "pkp", "person_kills_person"),
+         scenario = str_replace(scenario, "scc", "student_cheats_classmate"), 
+         scenario = str_replace(scenario, "sip", "student_insults_professor"), 
+         scenario = str_replace(scenario, "thls", "teacher_hits_lazy_student"), 
+         scenario = str_replace(scenario, "whh", "wife_hits_husband"), 
+         scenario = str_replace(scenario, "tmdp", "teenager_mocks_disabled"))
+
+# create mean measures from the long dataset
+
+dsl <- d_long %>% 
+  group_by(scenario, type, def, dop) %>% 
+  summarise(mean_harm = mean(harm), 
+            mean_imm = mean(immoral), 
+            mean_unex = mean(unexpected)) 
+
+# Scale all variables before the analysis
+d_long_scaled <- 
+  d_long %>% 
+  mutate_at(c("id", "type", "scenario", "conservative", "neg_beh", "gender", "race", "income"), ~as.factor(.)) %>% 
+  mutate_if(is.numeric, scale)
+```
+
+In this supplement, I show why I chose the most parsimonious model for this analysis. In order to do this I will compare the models using different measures of information criteria. I add controls in a step-wise fashion to assess how much they add to the explanatory value of each model. Then, I compare a total of 5 models using both BIC and AIC. 
+
+```{r}
+
+m1 <- lmer(immoral ~ 1 + ae + ap + aa + be + bp + ba + oe + op + oa + (1 | id) + (1 | scenario),
+           data = d_long_scaled)
+
+m2 <- lmer(immoral ~ 1 + ae + ap + aa + be + bp + ba + oe + op + oa + (1 | id) + (1 | scenario) + gender,
+           data = d_long_scaled)
+
+m3 <- lmer(immoral ~ 1 + ae + ap + aa + be + bp + ba + oe + op + oa + (1 | id) + (1 | scenario) + gender + conservative,
+           data = d_long_scaled)
+
+m4 <- lmer(immoral ~ 1 + ae + ap + aa + be + bp + ba + oe + op + oa + (1 | id) + (1 | scenario) + gender + conservative + race,
+           data = d_long_scaled)
+
+m5 <- lmer(immoral ~ 1 + ae + ap + aa + be + bp + ba + oe + op + oa + (1 | id) + (1 | scenario) + gender + conservative + race + income,
+           data = d_long_scaled)
+
+bic_table <- BIC(m1, m2, m3, m4, m5)
+aic_table <- AIC(m1, m2, m3, m4, m5)
+
+bic_table %>% 
+  as_tibble() %>%  
+  mutate(model = c("Parsimonious", 
+                   "Gender", 
+                   "Gender + Ideology", 
+                   "Gender + Ideology + Race", 
+                   "Gender + Ideology + Race + Income")) %>% 
+  select(model, everything()) %>% 
+  kable(caption = "BIC Comparison") %>%  
+  kable_styling(bootstrap_options = c('striped'))
+
+aic_table %>% 
+  as_tibble() %>%  
+  mutate(model = c("Parsimonious", 
+                   "Gender", 
+                   "Gender + Ideology", 
+                   "Gender + Ideology + Race", 
+                   "Gender + Ideology + Race + Income")) %>% 
+    select(model, everything()) %>% 
+  kable(caption = "AIC Comparison") %>%  
+  kable_styling(bootstrap_options = c('striped'))
+```
+
+As evidenced above, the model that includes no additional control variables has the lowest values in both BIC and AIC, indicating that it is the most informative model given the available data. 
