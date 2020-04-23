@@ -377,9 +377,10 @@ levels(events_def$type_num) <- c("harm", "purity", "fairness", "authority", "loy
 shapes <-  c(5:9) 
 shapes <- shapes[as.numeric(events_def$type_num)]
 
-s3d <- scatterplot3d(events_def[, c(7,8,11)], pch = shapes, main = "Figure 3")
-legend(s3d$xyz.convert(2.5, 0.5, 1), legend = levels(events_def$type_num),
-      pch = c(5:9))
+s3d <- scatterplot3d(events_def[, c(7,8,11)], pch = shapes, main = "Figure 3", xlab = "behavior evaluation", ylab = "behavior potency", 
+                     zlab = "object potency", box = F)
+legend('top', legend = levels(events_def$type_num),
+       pch = c(5:9), border = NULL, bty = "n", horiz = T, cex = 0.5)
 ```
 
 ## Study 2
