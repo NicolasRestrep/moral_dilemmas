@@ -2,7 +2,10 @@
 title: "Methodological Supplement - Study 1"
 author: "Nicolas Restrepo"
 date: "4/2/2020"
-output: html_document
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -283,8 +286,8 @@ bic_table %>%
                    "Gender + Ideology + Race", 
                    "Gender + Ideology + Race + Income")) %>% 
   select(model, everything()) %>% 
-  kable(caption = "BIC Comparison") %>%  
-  kable_styling(bootstrap_options = c('striped'))
+  kable(caption = "BIC Comparison", 'latex', booktabs = T) %>%  
+  kable_styling(latex_options = c("striped", "hold_position"))
 
 aic_table %>% 
   as_tibble() %>%  
@@ -294,8 +297,8 @@ aic_table %>%
                    "Gender + Ideology + Race", 
                    "Gender + Ideology + Race + Income")) %>% 
     select(model, everything()) %>% 
-  kable(caption = "AIC Comparison") %>%  
-  kable_styling(bootstrap_options = c('striped'))
+  kable(caption = "AIC Comparison", 'latex', booktabs = T) %>%  
+  kable_styling(latex_options = c("striped", "hold_position"))
 ```
 
 As evidenced above, the model that includes no additional control variables has the lowest values in both BIC and AIC, indicating that it is the most informative model given the available data. 

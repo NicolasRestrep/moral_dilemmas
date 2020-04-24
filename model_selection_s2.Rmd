@@ -3,8 +3,8 @@ title: "Methodological Supplement Study 2"
 author: "Nicolas Restrepo"
 date: "4/2/2020"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -496,6 +496,6 @@ m <- lmer(reaction_time_harm ~ 1 + distances_prot + I(distances_prot^2) + length
            data = (d_long_scaled %>% 
                      filter(type != 'purity')))
 
-tab_model(m)
+plot_model(m, sort.est = T, title = "Excluding purity")
 ```
 
